@@ -36,7 +36,7 @@ try {
   ]);
   if (!n.length) throw new Error('keine News');
   data = {
-    news: n.map(r => ({ id: r.id, top: r.is_top, tag: r.tag, title: r.title, teaser: r.teaser, url: r.url, source: r.source, date: r.published_at, when: r.when_label || whenOf(r.published_at) })),
+    news: n.map(r => ({ id: r.id, slug0: r.slug, body: r.body, top: r.is_top, tag: r.tag, title: r.title, teaser: r.teaser, url: r.url, source: r.source, date: r.published_at, when: r.when_label || whenOf(r.published_at) })),
     events: e.map(r => ({ start: r.starts_on, end: r.ends_on, name: r.name, location: r.location })),
     winners: w, matches: m
   };
@@ -55,8 +55,9 @@ const slugify = s => String(s).toLowerCase()
   .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 70).replace(/-+$/, '');
 const used = new Set();
 for (const n of data.news) {
-  let s = slugify(n.title) || 'news', i = 2;
-  while (used.has(s)) s = `${slugify(n.title)}-${i++}`;
+  const base = n.slug0 || slugify(n.title) || 'news';
+  let s = base, i = 2;
+  while (used.has(s)) s = `${base}-${i++}`;
   used.add(s); n.slug = s; n.path = `/news/${s}/`;
 }
 
@@ -100,6 +101,16 @@ const page = (meta, body, scripts = []) => `${headFor(meta)}${nav}\n${body}\n${f
 
 /* ---------- News-HTML ---------- */
 const fmtDate = d => new Date(d + 'T12:00:00Z').toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric', timeZone: TZ });
+// Artikeltext: Absätze durch Leerzeilen, "## " = Zwischenüberschrift, "- " = Aufzählung, [Text](https://…) = Link, **fett**
+const inline = t => esc(t).replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (m, a, u) => `<a href="${u}" rel="noopener" target="_blank">${a}</a>`).replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+const bodyHtml = s => String(s || '').trim().split(/\n\s*\n/).map(bl => {
+  bl = bl.trim();
+  if (bl.startsWith('## ')) return `<h2>${inline(bl.slice(3))}</h2>`;
+  if (bl.startsWith('### ')) return `<h3>${inline(bl.slice(4))}</h3>`;
+  const lines = bl.split('\n');
+  if (lines.every(l => /^\s*- /.test(l))) return `<ul>${lines.map(l => `<li>${inline(l.replace(/^\s*- /, ''))}</li>`).join('')}</ul>`;
+  return `<p>${lines.map(inline).join('<br>')}</p>`;
+}).join('\n');
 const meta = n => `<div class="meta"><span class="tag">${esc(n.tag)}</span><span class="when">${esc(n.when)}</span></div>`;
 const src = n => { const u = safeUrl(n.url); return u ? `<span class="src">Quelle: <a href="${esc(u)}" rel="noopener" target="_blank">${esc(n.source || 'Link')}</a></span>` : ''; };
 const leadHtml = n => `${meta(n)}<h2><a href="${n.path}">${esc(n.title)}</a></h2><p>${esc(n.teaser)}</p>${src(n)}`;
@@ -134,13 +145,13 @@ pages.push({ url: '/news/', pri: '0.9', freq: 'hourly' });
 for (const [i, n] of data.news.entries()) {
   const u = safeUrl(n.url);
   const more = data.news.filter(x => x !== n).slice(0, 3);
-  const ld = [{ '@context': 'https://schema.org', '@type': 'NewsArticle', headline: n.title, description: n.teaser, datePublished: n.date, dateModified: n.date, inLanguage: 'de-DE', mainEntityOfPage: SITE + n.path,
+  const ld = [{ '@context': 'https://schema.org', '@type': 'NewsArticle', headline: n.title, description: n.teaser, ...(n.body ? { wordCount: String(n.body).split(/\s+/).length } : {}), datePublished: n.date, dateModified: n.date, inLanguage: 'de-DE', mainEntityOfPage: SITE + n.path,
     author: { '@type': 'Organization', name: 'Darts aktuell', url: SITE + '/' }, publisher: { '@type': 'Organization', name: 'Darts aktuell', url: SITE + '/' } },
     crumbs([['Darts aktuell', '/'], ['News', '/news/'], [n.title, n.path]])];
   write(`news/${n.slug}/index.html`, page(
     { title: `${n.title} | Darts aktuell`, desc: String(n.teaser || n.title).slice(0, 158), url: n.path, type: 'article', ld },
     `<section class="hero band"><div class="wrap">${crumbNav([['Startseite', '/'], ['News', '/news/'], [n.title, n.path]])}
-<article class="lead article">${meta(n)}<h1>${esc(n.title)}</h1><p class="date">Veröffentlicht am <time datetime="${esc(n.date)}">${fmtDate(n.date)}</time></p><p>${esc(n.teaser)}</p>${u ? `<p>Mehr dazu bei der Quelle: <a href="${esc(u)}" rel="noopener" target="_blank">${esc(n.source || u)}</a></p>` : ''}
+<article class="lead article">${meta(n)}<h1>${esc(n.title)}</h1><p class="date">Veröffentlicht am <time datetime="${esc(n.date)}">${fmtDate(n.date)}</time></p><p>${esc(n.teaser)}</p>${n.body ? `<div class="body">${bodyHtml(n.body)}</div>` : ''}${u ? `<p>Mehr dazu bei der Quelle: <a href="${esc(u)}" rel="noopener" target="_blank">${esc(n.source || u)}</a></p>` : ''}
 <div class="row"><a class="btn-y" href="/darts-wm-spielplan/">WM-Spielplan</a><a class="btn-y" href="/darts-tippspiel/">Zum Tippspiel</a></div></article>
 </div></section>
 <section class="band"><div class="wrap"><h2>Weitere Darts-News</h2><div class="newslist">${more.map(x => cardHtml(x)).join('')}</div><p style="margin:18px 0 0"><a class="btn-y" href="/news/">Alle News</a></p></div></section>`
