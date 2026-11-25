@@ -16,12 +16,17 @@
   let fileNews = [];
 
   /* ---------- News ---------- */
+  const slugify = s => String(s).toLowerCase()
+    .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+    .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 70).replace(/-+$/, '');
+  const link = n => `<a href="/news/${slugify(n.title) || 'news'}/">${esc(n.title)}</a>`;
   function card(n, lead) {
     const u = safeUrl(n.url);
     const src = u ? `<span class="src">Quelle: <a href="${esc(u)}" rel="noopener" target="_blank">${esc(n.source || 'Link')}</a></span>` : '';
     const meta = `<div class="meta"><span class="tag">${esc(n.tag)}</span><span class="when">${esc(n.when)}</span></div>`;
-    return lead ? `${meta}<h2>${esc(n.title)}</h2><p>${esc(n.teaser)}</p>${src}`
-                : `<article class="ncard">${meta}<h3>${esc(n.title)}</h3><p>${esc(n.teaser)}</p>${src}</article>`;
+    return lead ? `${meta}<h2>${link(n)}</h2><p>${esc(n.teaser)}</p>${src}`
+                : `<article class="ncard">${meta}<h3>${link(n)}</h3><p>${esc(n.teaser)}</p>${src}</article>`;
   }
   function renderNews() {
     if (!$('newsLead')) return;
