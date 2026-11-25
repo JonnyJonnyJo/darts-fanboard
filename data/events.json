@@ -1,0 +1,147 @@
+{
+  "updated": "2026-11-25T16:00:00+01:00",
+  "upcoming": [
+    {
+      "start": "2026-11-27",
+      "end": "2026-11-29",
+      "name": "Players Championship Finals",
+      "location": "Minehead"
+    },
+    {
+      "start": "2026-11-30",
+      "end": "2026-11-30",
+      "name": "WM-Auslosung",
+      "location": "17:30 Uhr",
+      "flag": "wm"
+    },
+    {
+      "start": "2026-12-11",
+      "end": "2027-01-03",
+      "name": "Darts-WM 2026/27",
+      "location": "Alexandra Palace, London",
+      "flag": "wm"
+    },
+    {
+      "start": "2027-01-14",
+      "end": "2027-01-15",
+      "name": "Bahrain Darts Masters",
+      "location": "Sakhir"
+    },
+    {
+      "start": "2027-01-27",
+      "end": "2027-01-31",
+      "name": "World Masters",
+      "location": "Milton Keynes"
+    },
+    {
+      "start": "2027-02-04",
+      "end": "2027-05-27",
+      "name": "Premier League",
+      "location": "Start in Glasgow, Finale in London"
+    },
+    {
+      "start": "2027-03-05",
+      "end": "2027-03-07",
+      "name": "UK Open",
+      "location": "Minehead"
+    },
+    {
+      "start": "2027-06-10",
+      "end": "2027-06-13",
+      "name": "World Cup of Darts",
+      "location": "Frankfurt"
+    },
+    {
+      "start": "2027-06-18",
+      "end": "2027-06-20",
+      "name": "European Open",
+      "location": "Salzburg",
+      "flag": "new"
+    },
+    {
+      "start": "2027-07-17",
+      "end": "2027-07-25",
+      "name": "World Matchplay",
+      "location": "Blackpool"
+    },
+    {
+      "start": "2027-09-16",
+      "end": "2027-09-19",
+      "name": "World Series Finals",
+      "location": "Amsterdam"
+    },
+    {
+      "start": "2027-09-27",
+      "end": "2027-10-03",
+      "name": "World Grand Prix",
+      "location": "Leicester"
+    },
+    {
+      "start": "2027-10-26",
+      "end": "2027-10-31",
+      "name": "Europameisterschaft",
+      "location": "Dortmund"
+    },
+    {
+      "start": "2027-11-06",
+      "end": "2027-11-14",
+      "name": "Grand Slam of Darts",
+      "location": "Wolverhampton"
+    },
+    {
+      "start": "2027-11-26",
+      "end": "2027-11-28",
+      "name": "Players Championship Finals",
+      "location": "Minehead"
+    }
+  ],
+  "winners": [
+    {
+      "season": 2026,
+      "tournament": "WM 2026",
+      "winner": "Luke Littler",
+      "final": "7:1 gegen Gian van Veen"
+    },
+    {
+      "season": 2026,
+      "tournament": "World Masters",
+      "winner": "Luke Littler",
+      "final": "6:5 gegen Luke Humphries"
+    },
+    {
+      "season": 2026,
+      "tournament": "UK Open",
+      "winner": "Luke Littler",
+      "final": "Finale gegen James Wade"
+    },
+    {
+      "season": 2026,
+      "tournament": "World Cup",
+      "winner": "England",
+      "final": "Littler/Humphries gegen die Niederlande"
+    },
+    {
+      "season": 2026,
+      "tournament": "World Series Finals",
+      "winner": "Ross Smith"
+    },
+    {
+      "season": 2026,
+      "tournament": "World Grand Prix",
+      "winner": "Luke Humphries",
+      "final": "6:4 gegen Gerwyn Price"
+    },
+    {
+      "season": 2026,
+      "tournament": "Europameisterschaft",
+      "winner": "Ross Smith",
+      "final": "11:8 gegen Martin Schindler"
+    },
+    {
+      "season": 2026,
+      "tournament": "Grand Slam",
+      "winner": "Gerwyn Price",
+      "final": "16:11 gegen Gian van Veen"
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "updated": "2026-11-25T16:00:00+01:00",
+  "items": [
+    {
+      "id": "n001",
+      "date": "2026-11-25",
+      "when": "Vorschau · Mo 30.11., 17:30 Uhr",
+      "tag": "WM 2026/27",
+      "title": "Auslosung am Montag: Wer bekommt wen im Ally Pally?",
+      "teaser": "Am Montag nach den Players Championship Finals wird das 128er-Feld ausgelost. Wie im Vorjahr steigen alle 128 Spieler in der 1. Runde ein. Titelverteidiger Luke Littler greift nach dem dritten WM-Titel in Folge – los geht es am 11. Dezember.",
+      "url": "https://ran.joyn.de/sports/darts/darts-wm/darts-wm2027-die-auslosung-live-im-tv-livestream-und-ticker-alle-infos-220414",
+      "source": "ran.de",
+      "top": true
+    },
+    {
+      "id": "n002",
+      "date": "2026-11-22",
+      "when": "So 22.11.",
+      "tag": "Grand Slam",
+      "title": "Price holt seinen vierten Grand-Slam-Titel",
+      "teaser": "Gerwyn Price gewinnt das Finale in Wolverhampton 16:11 gegen Gian van Veen. Littler war schon in Runde zwei an Jermaine Wattimena gescheitert.",
+      "url": "https://www.espn.com/darts/story/_/id/50134994/grand-slam-darts-2026-schedule-results-prize-money",
+      "source": "ESPN",
+      "top": false
+    },
+    {
+      "id": "n003",
+      "date": "2026-11-24",
+      "when": "Vorschau · 27.–29.11.",
+      "tag": "Players Championship Finals",
+      "title": "Minehead ohne Littler – Nijman ist topgesetzt",
+      "teaser": "Der Weltranglistenerste hat zu wenige Pro-Tour-Turniere gespielt und fehlt beim letzten Major des Jahres. Dabei sind u. a. Schindler, Clemens, Springer und Hopp.",
+      "url": "https://www.sportinglife.com/darts/news/players-championship-finals-no-luke-littler-in-minehead-as-draw-is-made-for-final-darts-major-of-2026/235342",
+      "source": "Sporting Life",
+      "top": false
+    },
+    {
+      "id": "n004",
+      "date": "2026-10-25",
+      "when": "So 25.10.",
+      "tag": "Europameisterschaft",
+      "title": "Ross Smith siegt in Dortmund – Schindler schreibt Geschichte",
+      "teaser": "Smith gewinnt das EM-Finale 11:8. Martin Schindler stand als erster Deutscher überhaupt in einem TV-Finale der PDC.",
+      "url": "https://www.flashscore.com/news/darts-ross-smith-claims-second-european-championship-crown/MqllPahB/",
+      "source": "Flashscore",
+      "top": false
+    },
+    {
+      "id": "n005",
+      "date": "2026-10-04",
+      "when": "So 4.10.",
+      "tag": "World Grand Prix",
+      "title": "Humphries dreht ein 0:3 gegen Price",
+      "teaser": "Im Finale von Leicester liegt Luke Humphries drei Sätze zurück – und gewinnt noch 6:4. Sein zweiter Titel beim Double-In-Turnier.",
+      "url": "https://www.radiox.co.uk/news/sport/world-grand-prix-darts-luke-humphries-beats-g/",
+      "source": "Radio X",
+      "top": false
+    },
+    {
+      "id": "n006",
+      "date": "2026-11-20",
+      "when": "Hintergrund",
+      "tag": "WM 2026/27",
+      "title": "Mehr Platz im Ally Pally: WM zieht in die Great Hall",
+      "teaser": "Erstmals wird im großen Saal des Alexandra Palace gespielt. Statt rund 3.200 passen jetzt mehr als 5.200 Fans in jede Session.",
+      "url": "https://www.livescore.com/en/news/darts/pdc-world-darts-championship-2026-27-full-schedule-and-key-dates/",
+      "source": "LiveScore",
+      "top": false
+    },
+    {
+      "id": "n007",
+      "date": "2026-09-25",
+      "when": "PDC-Kalender",
+      "tag": "Kalender 2027",
+      "title": "Neues Major in Salzburg",
+      "teaser": "Die European Open feiern im Juni 2027 Premiere, dazu gibt es erstmals ein European-Tour-Event in Frankreich. Die Premier League startet am 4. Februar in Glasgow.",
+      "url": "https://www.skysports.com/darts/news/13591794/darts-set-for-major-2027-shake-up-with-new-tv-major-and-france-hosting-ranking-event-but-what-does-it-mean-for-luke-littler",
+      "source": "Sky Sports",
+      "top": false
+    }
+  ]
+}
