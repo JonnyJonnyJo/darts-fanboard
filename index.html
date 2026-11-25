@@ -90,35 +90,13 @@
 
 <section class="band" id="tippspiel" style="border-top:1px solid var(--line)"><div class="wrap">
   <h2>WM-Tippspiel</h2>
-  <p style="color:var(--soft);max-width:70ch;margin:8px 0 0">Kostenlos mitspielen, Weltmeister tippen, jedes Spiel tippen und in der Rangliste nach oben klettern. Tippschluss für jedes Spiel ist der Anwurf.</p>
-  <div class="tmode" id="tMode" hidden style="margin-top:16px">Demo-Modus: Deine Tipps werden nur in diesem Browser gespeichert. Für die öffentliche Rangliste wird die Seite mit dem Tippspiel-Server verbunden.</div>
-  <div class="tgrid">
-    <div style="display:grid;gap:18px">
-      <div class="tcard"><div id="tAccount"></div><div class="msg" id="tMsg" aria-live="polite" style="color:var(--green)"></div></div>
-      <div class="tcard">
-        <h3>Langzeit-Tipps</h3>
-        <div id="tBonus"></div>
-        <div><button class="btn-r" id="tBonusSave" type="button">Bonus-Tipps speichern</button></div>
-      </div>
-      <div class="tcard"><h3>Spiel-Tipps</h3><div id="tMatches"></div></div>
-    </div>
-    <div style="display:grid;gap:18px">
-      <div class="tcard">
-        <div class="trow" style="justify-content:space-between"><h3>Rangliste</h3><span class="note" id="tBoardNote"></span></div>
-        <div class="trow" id="tBoardPick" hidden><label for="tBoardSel" class="note">Anzeigen:</label><select id="tBoardSel"></select></div>
-        <div class="scroll"><table class="tboard"><thead><tr><th class="r">#</th><th>Spieler</th><th class="r" title="Exakte Treffer">Exakt</th><th class="r">Bonus</th><th class="r">Punkte</th></tr></thead><tbody id="tBoard"></tbody></table></div>
-      </div>
-      <div class="tcard" id="tGroupsCard">
-        <h3>Private Tipprunden</h3>
-        <p class="note" style="margin:0 0 10px">Eigene Rangliste mit Freunden, Familie oder Verein: Runde erstellen, Link teilen, fertig. Alle tippen ganz normal mit, die Runde zeigt nur eure Plätze.</p>
-        <div id="tGroups"></div>
-      </div>
-      <div class="tcard">
-        <h3>So gibt's Punkte</h3>
-        <ul class="trules"><li>Exaktes Satzergebnis: 4 Punkte</li><li>Richtiger Sieger: 2 Punkte</li><li>Langzeit-Tipps: Punkte laut Frage, Tippschluss zum Turnierstart</li><li>Gleichstand: mehr exakte Treffer liegen vorne</li></ul>
-        <p class="note" style="margin:0">Teilnahme kostenlos, kein Einsatz. <a href="/teilnahmebedingungen.html">Teilnahmebedingungen</a></p>
-      </div>
-    </div>
+  <p style="color:var(--soft);max-width:70ch;margin:8px 0 0">Kostenlos mittippen wie bei Kicktipp: jeden WM-Spieltag tippen, Tipps der anderen nach dem Anwurf sehen, Spieltagssieger werden und mit Freunden in der eigenen Tipprunde um die Tabellenspitze kämpfen.</p>
+  <div class="tmode" id="tMode" hidden style="margin-top:16px">Demo-Modus: Deine Tipps werden nur in diesem Browser gespeichert.</div>
+  <div class="kt">
+    <div class="tcard kt-acc"><div id="tAccount"></div><div class="msg" id="tMsg" aria-live="polite" style="color:var(--green)"></div>
+      <div class="trow kt-runde" id="tRundeBox" hidden><label for="tRunde">Tipprunde:</label><select id="tRunde"></select></div></div>
+    <div class="kt-tabs" id="ktTabs" role="tablist" aria-label="Tippspiel"></div>
+    <div class="tcard kt-panel" id="ktPanel" role="tabpanel"></div>
   </div>
   <datalist id="tPlayers"><option>Luke Littler</option><option>Luke Humphries</option><option>Gian van Veen</option><option>Michael van Gerwen</option><option>Gerwyn Price</option><option>Gary Anderson</option><option>Ryan Searle</option><option>Peter Wright</option><option>Michael Smith</option><option>Martin Schindler</option></datalist>
 </div></section>

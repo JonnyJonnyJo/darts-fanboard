@@ -258,3 +258,59 @@ nav.crumbs{position:static;z-index:auto;background:none;border:0;color:inherit;f
 .tsocial-apple{background:#000;color:#fff;border-color:#000}
 .tsocial:hover{filter:brightness(.96)}
 .tor{margin:6px 0 4px;text-align:center}
+
+/* Tippspiel im Kicktipp-Stil */
+.kt{display:grid;gap:0;margin-top:18px}
+.kt-acc{margin-bottom:14px}
+.kt-me{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
+.kt-who{display:flex;flex-direction:column;margin-right:auto}
+.kt-who b{font-size:18px}
+.kt-stat{display:flex;flex-direction:column;align-items:center;min-width:58px;padding:6px 10px;border-radius:10px;background:light-dark(#eef5ef,#1d2f23)}
+.kt-stat b{font:700 22px/1.1 Oswald,sans-serif;color:var(--green)}
+.kt-stat span{font-size:12px;color:var(--soft)}
+.kt-stat.warn{background:light-dark(#fff1d0,#3a2a10)}.kt-stat.warn b{color:#b45f00}
+.kt-runde{margin-top:12px}.kt-runde select{flex:1;min-width:0}
+.kt-tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;background:var(--green);border-radius:14px 14px 0 0;padding:6px 6px 0}
+.kt-tabs::-webkit-scrollbar{display:none}
+.kt-tab{flex:none;border:0;background:transparent;color:#d9eee0;font:600 15px Barlow,system-ui,sans-serif;padding:11px 14px;border-radius:10px 10px 0 0;cursor:pointer;white-space:nowrap}
+.kt-tab:hover{color:#fff}
+.kt-tab.on{background:var(--card,#fffdf6);color:var(--green)}
+.kt-panel{border-top-left-radius:0;border-top-right-radius:0;min-height:160px}
+.kt-days{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:thin}
+.kt-days .dchip{flex:none}
+.kt-h{margin:4px 0 8px;font-size:18px}
+.kt-sess{font-size:13px;font-weight:700;color:var(--soft);text-transform:uppercase;letter-spacing:.03em;margin:14px 0 4px}
+.kt-row{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) 64px;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
+.kt-row.closed{opacity:.75}
+.kt-p1{text-align:right;font-weight:600}.kt-p2{font-weight:600}
+.kt-in{display:flex;align-items:center;gap:4px}
+.kt-in input{width:46px;height:44px;text-align:center;font:700 20px Oswald,sans-serif;padding:0;border-radius:10px}
+.kt-st{display:flex;gap:6px;align-items:center;justify-content:flex-end}
+.kt-saved{color:var(--green);font-weight:700;font-size:18px}
+.kt-res{font-weight:700}
+.kt-pts{font-weight:700;border-radius:6px;padding:1px 6px;font-size:13px}
+.kt-save{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:16px}
+.p4{background:#1e8a4c;color:#fff}.p3{background:#7cc58f;color:#0b3a1f}.p2{background:#ffe27a;color:#4a3a00}.p0{background:light-dark(#eee,#2a2a2a);color:#888}
+.kt-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:12px}
+.kt-ov,.kt-tab-t{border-collapse:collapse;width:100%;font-size:14px}
+.kt-ov th,.kt-ov td,.kt-tab-t th,.kt-tab-t td{padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.kt-ov th{font-size:12px;line-height:1.2;text-align:center;background:light-dark(#f3efe2,#1d2f23)}
+.kt-ov td.c{text-align:center;font-weight:600;min-width:46px}
+.kt-ov td.c sup{font-size:10px;margin-left:2px;opacity:.8}
+.kt-ov .sticky{position:sticky;left:0;background:var(--card,#fffdf6);z-index:1;text-align:left;max-width:150px;overflow:hidden;text-overflow:ellipsis}
+.kt-ov th.sticky{background:light-dark(#f3efe2,#1d2f23)}
+.kt-ov td.sum{font-weight:700;text-align:center}
+.kt-ov tr.me td,.kt-tab-t tr.me td{background:light-dark(#fff6d6,#3a3418)}
+.kt-tab-t th{background:light-dark(#f3efe2,#1d2f23);text-align:left;font-size:13px}
+.kt-tab-t .r{text-align:right}
+.kt-tab-t .mv{width:34px;font-size:12px;font-weight:700}
+.up{color:#1e8a4c}.down{color:var(--red)}.same{color:#aaa}
+.kt-legend{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:10px}
+.kt-legend .c{display:inline-block;min-width:22px;text-align:center;border-radius:6px;font-weight:700;padding:1px 4px}
+@media(max-width:600px){
+  .kt-row{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);row-gap:2px}
+  .kt-st{grid-column:1/-1;justify-content:center}
+  .kt-st:empty{display:none}
+  .kt-p1,.kt-p2{font-size:14px}
+  .kt-tab{padding:10px 11px;font-size:14px}
+}
