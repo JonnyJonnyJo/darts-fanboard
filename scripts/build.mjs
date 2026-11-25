@@ -157,7 +157,18 @@ try {
   if (process.env.CI) { console.error('supabase-js konnte nicht geladen werden – Abbruch, die alte Version bleibt online:', err.message); process.exit(1); }
   console.warn('supabase-js bleibt auf jsDelivr:', err.message);
 }
-const localize = html => html.split(CDN_SB).join(SB_SRC);
+// Cache-Busting: geänderte Dateien bekommen eine neue Versionsnummer, damit Browser sofort die neue Fassung laden
+const crypto = await import('node:crypto');
+const VER = {};
+for (const f of ['style.css', 'app.js', 'news.js', 'tippspiel.js', 'config.js']) {
+  const p = path.join(ROOT, f);
+  if (fs.existsSync(p)) VER[f] = crypto.createHash('sha1').update(fs.readFileSync(p)).digest('hex').slice(0, 8);
+}
+const localize = html => {
+  html = html.split(CDN_SB).join(SB_SRC);
+  for (const [f, v] of Object.entries(VER)) html = html.split(`"/${f}"`).join(`"/${f}?v=${v}"`);
+  return html;
+};
 if (fs.existsSync(path.join(OUT, 'admin.html'))) fs.writeFileSync(path.join(OUT, 'admin.html'), localize(fs.readFileSync(path.join(OUT, 'admin.html'), 'utf8')));
 
 // Startseite: News fest einbauen
