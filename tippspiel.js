@@ -3,6 +3,11 @@
   const CFG = window.DARTS_CONFIG || {};
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  // Ältere Login-Links: ".../#tippspiel#access_token=..." → Token-Teil freilegen, damit die Anmeldung erkannt wird
+  const AUTH_RE = /(access_token|error_description|error)=/;
+  if (/#[^#]*#/.test(location.hash) && AUTH_RE.test(location.hash)) history.replaceState(null, '', location.pathname + location.search + '#' + location.hash.split('#').pop());
+  const authError = AUTH_RE.test(location.hash) && /error/.test(location.hash) ? new URLSearchParams(location.hash.slice(1)) : null;
+  const cameFromLink = /access_token=/.test(location.hash);
   const LIVE = !!(CFG.supabaseUrl && CFG.supabaseAnonKey && window.supabase);
   const sb = LIVE ? window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey) : null;
   window.DARTS_SB = sb;
@@ -102,9 +107,10 @@
     a.innerHTML = `<div class="trow" style="justify-content:space-between"><span>Angemeldet als <b>${esc(profile.display_name)}</b></span><button class="tbtn" id="tOut" type="button">${LIVE ? 'Abmelden' : 'Name ändern'}</button></div>`;
   }
 
+  const needLogin = () => !profile ? `<p class="tneed">${LIVE && user ? 'Wähle oben noch deinen Spielernamen, dann kannst du tippen.' : 'Zum Tippen bitte oben <a href="#tAccount">anmelden</a> – kostenlos, ohne Passwort.'}</p>` : '';
   function renderBonus() {
     const can = !!profile;
-    $('tBonus').innerHTML = questions.map(q => {
+    $('tBonus').innerHTML = needLogin() + questions.map(q => {
       const open = isOpen(q.locks_at), v = myB[q.id] ?? '', dis = (!can || !open) ? 'disabled' : '';
       let input;
       const opts = Array.isArray(q.options) ? q.options : [];
@@ -120,7 +126,7 @@
     const box = $('tMatches');
     if (!matches.length) { box.innerHTML = `<p class="note">Die Paarungen werden nach der Auslosung eingetragen. Dann tippst du hier jedes Spiel: richtiger Sieger 2 Punkte, exaktes Satzergebnis 4 Punkte.</p>`; return; }
     let last = '';
-    box.innerHTML = matches.map(m => {
+    box.innerHTML = needLogin() + matches.map(m => {
       const need = (m.best_of + 1) / 2, t = myM[m.id], open = isOpen(m.starts_at), dis = (!profile || !open) ? 'disabled' : '';
       const head = m.round !== last ? `<h4>${esc(m.round)} · Best of ${m.best_of}</h4>` : ''; last = m.round;
       const res = m.sets1 != null ? `<span class="tres">${m.sets1}:${m.sets2}${t ? ' · ' + pts(t, m) + ' P.' : ''}</span>` : `<span class="note">${fmt(m.starts_at)}</span>`;
@@ -212,7 +218,7 @@
     if (e.target.id === 'tLogin') {
       e.preventDefault();
       const email = $('tE').value.trim();
-      const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + '/#tippspiel' } });
+      const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + '/darts-tippspiel/' } });
       say(error ? 'Link konnte nicht gesendet werden: ' + error.message : `Check dein Postfach: Der Login-Link ist an ${email} unterwegs.`, !!error);
     }
     if (e.target.id === 'tgNew') {
@@ -257,6 +263,8 @@
   $('tMatches').addEventListener('change', e => { const m = e.target.dataset.m; if (m) saveMatch(+m); });
 
   /* ---------- Start ---------- */
+  if (authError) say(/expired|invalid/i.test(authError.get('error_code') || authError.get('error_description') || '') ? 'Der Login-Link ist abgelaufen oder wurde schon benutzt. Bitte fordere oben einen neuen an.' : 'Anmeldung fehlgeschlagen: ' + (authError.get('error_description') || 'unbekannter Fehler'), true);
+  if (cameFromLink || authError) setTimeout(() => { const s = $('tAccount'); if (s) s.scrollIntoView({ block: 'center' }); }, 1200);
   if (LIVE) {
     sb.auth.onAuthStateChange((_ev, session) => { const u = session?.user || null; if ((u && u.id) !== (user && user.id)) { user = u; refresh(); } });
     sb.auth.getSession().then(({ data }) => { user = data.session?.user || null; refresh(); });
