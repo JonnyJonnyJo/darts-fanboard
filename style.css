@@ -220,3 +220,8 @@ footer ul{margin:8px 0 0;padding-left:18px}
 .cotable td:nth-child(2) span{display:inline-block;margin-right:4px}
 .cotable td:nth-child(2) .dbl{color:var(--red,#e1262f);font-weight:700}
 .cotable td:nth-child(2) .tr{color:var(--green);font-weight:700}
+.article .body h2{font-family:Oswald,sans-serif;font-size:24px;margin:22px 0 8px;color:var(--gold)}
+.article .body h3{font-size:19px;margin:18px 0 6px}
+.article .body ul{padding-left:20px}
+.article .body li{margin:4px 0}
+.article .body a{color:var(--gold)}

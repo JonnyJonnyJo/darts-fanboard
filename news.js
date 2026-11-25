@@ -20,7 +20,7 @@
     .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
     .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 70).replace(/-+$/, '');
-  const link = n => `<a href="/news/${slugify(n.title) || 'news'}/">${esc(n.title)}</a>`;
+  const link = n => `<a href="/news/${n.slug || slugify(n.title) || 'news'}/">${esc(n.title)}</a>`;
   function card(n, lead) {
     const u = safeUrl(n.url);
     const src = u ? `<span class="src">Quelle: <a href="${esc(u)}" rel="noopener" target="_blank">${esc(n.source || 'Link')}</a></span>` : '';
@@ -96,7 +96,7 @@
     ]);
     if (n.error || !n.data || !n.data.length) throw new Error('keine News in der Datenbank');
     return {
-      news: n.data.map(r => ({ top: r.is_top, tag: r.tag, title: r.title, teaser: r.teaser, url: r.url, source: r.source, date: r.published_at,
+      news: n.data.map(r => ({ slug: r.slug, top: r.is_top, tag: r.tag, title: r.title, teaser: r.teaser, url: r.url, source: r.source, date: r.published_at,
         when: r.when_label || new Date(r.published_at + 'T12:00:00').toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'numeric' }) })),
       events: (e.data || []).map(r => ({ start: r.starts_on, end: r.ends_on, name: r.name, location: r.location, flag: r.flag })),
       winners: w.data || [],
