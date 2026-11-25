@@ -24,6 +24,7 @@
                 : `<article class="ncard">${meta}<h3>${esc(n.title)}</h3><p>${esc(n.teaser)}</p>${src}</article>`;
   }
   function renderNews() {
+    if (!$('newsLead')) return;
     const all = [...fileNews].sort((a, b) => String(b.date).localeCompare(String(a.date)));
     if (!all.length) { $('newsLead').innerHTML = '<h2>News werden geladen …</h2>'; return; }
     const li = Math.max(0, all.findIndex(n => n.top));
@@ -34,6 +35,7 @@
   /* ---------- Kalender & Sieger ---------- */
   let events = [], winners = [], showAll = false;
   function renderCalendar() {
+    if (!$('calNext')) return;
     const t = today(), upcoming = events.filter(e => e.end >= t).sort((a, b) => a.start.localeCompare(b.start));
     const list = showAll ? upcoming : upcoming.slice(0, 7);
     $('calNext').innerHTML = list.map(e => {
@@ -48,12 +50,13 @@
     $('calSeason').textContent = season ? `Sieger ${season}` : 'Sieger';
     $('calWin').innerHTML = winners.filter(w => w.season === season).map(w => `<tr><td>${esc(w.tournament)}</td><td><b>${esc(w.winner)}</b></td><td>${esc(w.final || '')}</td></tr>`).join('');
   }
-  $('calMore').addEventListener('click', () => { showAll = !showAll; renderCalendar(); });
+  if ($('calMore')) $('calMore').addEventListener('click', () => { showAll = !showAll; renderCalendar(); });
 
   /* ---------- Paarungen & Ergebnisse (WM) ---------- */
   let matches = [], day = null;
   function renderMatches() {
     const box = $('wmGames');
+    if (!box) return;
     if (!matches.length) { box.hidden = true; return; }
     box.hidden = false;
     const days = [...new Set(matches.map(m => dayOf(m.starts_at)))].sort();
@@ -73,10 +76,11 @@
       return `${head}<li class="gm"><span class="p1${w1 ? ' win' : ''}">${esc(m.player1)}</span><span class="sc">${done ? `${m.sets1}:${m.sets2}` : '–:–'}</span><span class="p2${w2 ? ' win' : ''}">${esc(m.player2)}</span></li>`;
     }).join('');
   }
-  $('wmDays').addEventListener('click', e => { const d = e.target.closest('[data-day]'); if (d) { day = d.dataset.day; renderMatches(); } });
+  if ($('wmDays')) $('wmDays').addEventListener('click', e => { const d = e.target.closest('[data-day]'); if (d) { day = d.dataset.day; renderMatches(); } });
 
   /* ---------- Laden: zuerst aus der Datenbank, sonst aus data/*.json ---------- */
-  const sb = window.DARTS_SB;
+  const C = window.DARTS_CONFIG;
+  const sb = window.DARTS_SB || (window.supabase && C && C.supabaseUrl && C.supabaseAnonKey ? window.supabase.createClient(C.supabaseUrl, C.supabaseAnonKey) : null);
   const fromDb = async () => {
     const [n, e, w, m, s] = await Promise.all([
       sb.from('news').select('*').order('published_at', { ascending: false }).order('id', { ascending: false }).limit(30),
@@ -96,16 +100,16 @@
     };
   };
   const fromFiles = async () => {
-    const [n, e, m] = await Promise.all([load('data/news.json'), load('data/events.json'), load('data/matches.json')]);
+    const [n, e, m] = await Promise.all([load('/data/news.json'), load('/data/events.json'), load('/data/matches.json')]);
     return { news: n.items || [], events: e.upcoming || [], winners: e.winners || [], matches: m.matches || [], updated: n.updated };
   };
   const refresh = async (first) => {
     let d = null;
     if (sb) { try { d = await fromDb(); } catch (err) { d = null; } }
     if (!d && first) { try { d = await fromFiles(); } catch (err) { d = null; } }
-    if (!d) { if (first) $('newsLead').innerHTML = '<h2>News konnten gerade nicht geladen werden.</h2><p>Bitte später noch einmal versuchen.</p>'; return; }
+    if (!d) { if (first && $('newsLead') && !$('newsLead').children.length) $('newsLead').innerHTML = '<h2>News konnten gerade nicht geladen werden.</h2><p>Bitte später noch einmal versuchen.</p>'; return; }
     fileNews = d.news; events = d.events; winners = d.winners; matches = d.matches;
-    if (d.updated) $('newsUpdated').textContent = 'Aktualisiert: ' + new Date(d.updated).toLocaleString('de-DE', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: TZ }) + ' Uhr';
+    if (d.updated && $('newsUpdated')) $('newsUpdated').textContent = 'Aktualisiert: ' + new Date(d.updated).toLocaleString('de-DE', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: TZ }) + ' Uhr';
     renderNews(); renderCalendar(); renderMatches();
   };
   refresh(true);

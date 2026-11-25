@@ -70,7 +70,7 @@
       return;
     }
     if (LIVE && !user) {
-      a.innerHTML = `<form id="tLogin" class="trow"><label for="tE">E-Mail für deinen Login-Link</label><input id="tE" type="email" required autocomplete="email" placeholder="name@beispiel.de"><button class="btn-r" type="submit">Link senden</button></form><p class="note">Kein Passwort nötig: Du bekommst einen Link per E-Mail. Mit der Anmeldung akzeptierst du die <a href="teilnahmebedingungen.html">Teilnahmebedingungen</a> und die <a href="datenschutz.html">Datenschutzerklärung</a>.</p>`;
+      a.innerHTML = `<form id="tLogin" class="trow"><label for="tE">E-Mail für deinen Login-Link</label><input id="tE" type="email" required autocomplete="email" placeholder="name@beispiel.de"><button class="btn-r" type="submit">Link senden</button></form><p class="note">Kein Passwort nötig: Du bekommst einen Link per E-Mail. Mit der Anmeldung akzeptierst du die <a href="/teilnahmebedingungen.html">Teilnahmebedingungen</a> und die <a href="/datenschutz.html">Datenschutzerklärung</a>.</p>`;
       return;
     }
     if (LIVE && !profile) {
@@ -161,7 +161,7 @@
     if (e.target.id === 'tLogin') {
       e.preventDefault();
       const email = $('tE').value.trim();
-      const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname + '#tippspiel' } });
+      const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + '/#tippspiel' } });
       say(error ? 'Link konnte nicht gesendet werden: ' + error.message : `Check dein Postfach: Der Login-Link ist an ${email} unterwegs.`, !!error);
     }
     if (e.target.id === 'tName') {
