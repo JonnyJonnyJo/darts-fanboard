@@ -1,8 +1,15 @@
 # Ally Pally Fanboard – Darts-WM 2026/27 mit Tippspiel
 
-So bringst du die Seite mit öffentlichem Tippspiel online. Dauer: etwa 45–60 Minuten, Kosten: 0 € (die kostenlosen Tarife von GitHub und Supabase reichen für eine Fanseite).
+**Stand 25.11.2026 – alles ist eingerichtet:**
+- Seite: https://jonnyjonnyjo.github.io/darts-fanboard/ (GitHub-Repository `JonnyJonnyJo/darts-fanboard`, GitHub Pages)
+- Datenbank & Login: Supabase-Projekt `darts-fanboard` (Frankfurt), Projekt-ID `puxtqvnafzrbmynaefza`
+- Inhalte (News, Turnierkalender, Sieger, WM-Paarungen & Ergebnisse) stehen in der Datenbank und werden von einem geplanten Claude-Auftrag zweimal täglich aktualisiert. Regeln dafür: `CLAUDE-UPDATE.md`.
+- Paarungen und Ergebnisse landen damit direkt im Tippspiel – die Rangliste rechnet sofort neu.
 
-**Was danach automatisch läuft:** Ein geplanter Claude-Auftrag recherchiert zweimal täglich News, Turniertermine, WM-Paarungen und Ergebnisse, schreibt eigene Texte und speichert sie im GitHub-Repository. GitHub prüft die Daten, überträgt Paarungen und Ergebnisse ins Tippspiel und veröffentlicht die Seite – ohne dass du etwas tun musst.
+Änderungen an der Seite selbst (Design, Texte, Rechtsseiten): Datei im Repository auf GitHub bearbeiten → wird automatisch veröffentlicht.
+Die Dateien in `data/` sind nur noch Reserve, falls die Datenbank einmal nicht erreichbar ist.
+
+Die folgenden Abschnitte beschreiben die Einrichtung von Grund auf – zum Nachschlagen.
 
 ## Was ist drin?
 
