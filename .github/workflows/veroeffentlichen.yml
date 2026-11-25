@@ -1,11 +1,13 @@
-# Bei jeder Änderung auf "main": Daten prüfen → Seite auf GitHub Pages veröffentlichen
-# (Paarungen & Ergebnisse holt sich die Supabase-Datenbank alle 10 Minuten selbst aus data/matches.json.)
+# Bei jeder Änderung auf "main" und automatisch alle 30 Minuten:
+# Daten prüfen → aktuelle News/Spiele aus Supabase holen → alle Seiten bauen → auf GitHub Pages veröffentlichen
 name: Seite veröffentlichen
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    - cron: '7,37 * * * *'
 
 permissions:
   actions: read
@@ -32,12 +34,8 @@ jobs:
       - name: Datendateien prüfen
         run: node scripts/validate.mjs
 
-      - name: Nur die Webseiten-Dateien einpacken
-        run: |
-          mkdir _site
-          cp -r index.html admin.html impressum.html datenschutz.html teilnahmebedingungen.html \
-                config.js tippspiel.js news.js data _site/
-          if [ -f CNAME ]; then cp CNAME _site/; fi
+      - name: Seiten bauen (News, Spielplan, Werkzeuge, Sitemap)
+        run: node scripts/build.mjs
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
