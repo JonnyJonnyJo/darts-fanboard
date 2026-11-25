@@ -1,3 +1,4 @@
+[hidden]{display:none!important}
 /* VOICE: Ally-Pally-Abend, sportlich und frisch – Variante B „Board-Grün“.
    IDEA: Die Seite ist ein Dartboard mit Anzeigetafel: Board-Grün, Sisal-Creme, Treble-Rot.
    PICTURE: Ein großes, klickbares Board, das gleichzeitig der 501-Scorer ist.
@@ -241,3 +242,12 @@ nav.crumbs{position:static;z-index:auto;background:none;border:0;color:inherit;f
   nav .links a:last-child{border-bottom:0}
   nav .wrap{position:relative}
 }
+
+/* Private Tipprunden */
+.tglist{list-style:none;padding:0;margin:0 0 14px;display:grid;gap:10px}
+.tglist li{border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:8px}
+.tinvite{background:#fff6d6;border:1px solid var(--gold);border-radius:12px;padding:10px 12px;margin:0}
+#tGroups form{margin-top:10px;flex-wrap:wrap}
+#tGroups input{flex:1;min-width:0}
+#tBoardPick{margin:6px 0 10px}
+#tBoardPick select{flex:1}

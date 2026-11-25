@@ -10,6 +10,10 @@
   const isOpen = d => Date.now() < new Date(d).getTime();
 
   let user = null, profile = null, questions = [], matches = [], board = [], myM = {}, myB = {}, busy = false;
+  let groups = [], groupsOk = true, view = '', viewBoard = null, invite = null;
+  const INVITE_URL = c => `${location.origin}/darts-tippspiel/?runde=${c}`;
+  const pend = { get(){ try { return localStorage.getItem('tippRunde') || ''; } catch(e){ return ''; } }, set(v){ try { v ? localStorage.setItem('tippRunde', v) : localStorage.removeItem('tippRunde'); } catch(e){} } };
+  { const c = new URLSearchParams(location.search).get('runde'); if (c && /^[A-Za-z2-9]{8}$/.test(c)) pend.set(c.toUpperCase()); }
 
   /* ---------- Demo-Modus ---------- */
   const DEMO_LOCK = '2026-12-11T20:00:00+01:00';
@@ -54,11 +58,29 @@
       sb.from('bonus_tips').select('*').eq('user_id', user.id)
     ]);
     profile = p.data || null;
+    if (profile) {
+      const pc = pend.get();
+      if (pc) { const j = await sb.rpc('join_tip_group', { p_code: pc }); pend.set(''); if (!j.error) { say(`Du bist jetzt in der Tipprunde „${j.data}“.`); view = pc; } else say(j.error.message, true); }
+      const g = await sb.rpc('my_tip_groups'); groupsOk = !g.error; groups = g.data || [];
+    } else groups = [];
     (mt.data || []).forEach(t => myM[t.match_id] = t);
     (bt.data || []).forEach(t => myB[t.question_id] = t.value);
   }
+  async function loadInvite() {
+    const pc = pend.get(); invite = null;
+    if (!LIVE || !pc || profile) return;
+    const r = await sb.rpc('tip_group_info', { p_code: pc });
+    if (!r.error && r.data && r.data[0]) invite = { code: pc, ...r.data[0] }; else pend.set('');
+  }
+  async function loadView() {
+    viewBoard = null;
+    if (!LIVE || !view) return;
+    if (!groups.some(g => g.code === view)) { view = ''; return; }
+    const r = await sb.rpc('group_leaderboard', { p_code: view });
+    if (!r.error) viewBoard = r.data;
+  }
   async function refresh() {
-    try { await loadPublic(); await loadMine(); } catch (e) { say('Daten konnten nicht geladen werden: ' + (e.message || e), true); }
+    try { await loadPublic(); await loadMine(); await loadInvite(); await loadView(); } catch (e) { say('Daten konnten nicht geladen werden: ' + (e.message || e), true); }
     render();
   }
 
@@ -112,16 +134,45 @@
   const pts = (t, m) => (t.sets1 === m.sets1 && t.sets2 === m.sets2) ? 4 : (Math.sign(t.sets1 - t.sets2) === Math.sign(m.sets1 - m.sets2) ? 2 : 0);
 
   function renderBoard() {
-    $('tBoardNote').textContent = LIVE ? `${board.length} Mitspieler` : 'Beispiel-Rangliste im Demo-Modus';
-    $('tBoard').innerHTML = board.length ? board.map(r => {
+    const pick = $('tBoardPick');
+    if (pick) {
+      pick.hidden = !groups.length;
+      $('tBoardSel').innerHTML = `<option value="">Alle Mitspieler</option>` + groups.map(g => `<option value="${esc(g.code)}"${g.code === view ? ' selected' : ''}>${esc(g.name)}</option>`).join('');
+    }
+    const list = view && viewBoard ? viewBoard : board;
+    $('tBoardNote').textContent = LIVE ? `${list.length} Mitspieler` : 'Beispiel-Rangliste im Demo-Modus';
+    $('tBoard').innerHTML = list.length ? list.map(r => {
       const me = profile && (r.display_name === profile.display_name || r.display_name === profile.display_name + ' (du)');
       return `<tr${me ? ' class="me"' : ''}><td class="r">${r.rank}.</td><td>${esc(r.display_name)}</td><td class="r">${r.exact_hits}</td><td class="r">${r.bonus_points}</td><td class="r"><b>${r.points}</b></td></tr>`;
     }).join('') : `<tr><td colspan="5" class="note">Noch keine Mitspieler – sei die oder der Erste!</td></tr>`;
   }
 
+  function renderGroups() {
+    const box = $('tGroups'); if (!box) return;
+    if (!LIVE) { box.innerHTML = '<p class="note">Im Demo-Modus nicht verfügbar.</p>'; return; }
+    if (!groupsOk) { $('tGroupsCard').hidden = true; return; }
+    if (!profile) {
+      box.innerHTML = invite
+        ? `<p class="tinvite">Du bist zur Tipprunde <b>${esc(invite.name)}</b> eingeladen (${invite.members} ${invite.members === 1 ? 'Mitspieler' : 'Mitspieler'}). Melde dich oben an – danach bist du automatisch dabei.</p>`
+        : '<p class="note">Melde dich oben an, um eine Tipprunde zu erstellen oder einer beizutreten.</p>';
+      return;
+    }
+    const share = !!navigator.share;
+    box.innerHTML = (groups.length ? `<ul class="tglist">${groups.map(g => `<li><div><b>${esc(g.name)}</b><span class="note"> · ${g.members} Mitspieler · Code ${esc(g.code)}</span></div>
+      <div class="trow"><button class="tbtn" type="button" data-gshare="${esc(g.code)}" data-gname="${esc(g.name)}">${share ? 'Einladen' : 'Link kopieren'}</button><button class="tbtn" type="button" data-gview="${esc(g.code)}">Rangliste</button><button class="tbtn" type="button" data-gleave="${esc(g.code)}">Verlassen</button></div></li>`).join('')}</ul>` : '')
+      + `<form id="tgNew" class="trow"><label for="tgName" class="note" style="flex-basis:100%">Neue Tipprunde</label><input id="tgName" maxlength="40" minlength="3" required placeholder="z. B. Dartclub Oelde"><button class="btn-r" type="submit">Erstellen</button></form>
+         <form id="tgJoin" class="trow"><label for="tgCode" class="note" style="flex-basis:100%">Code einer Tipprunde</label><input id="tgCode" maxlength="8" minlength="8" required placeholder="8 Zeichen" style="text-transform:uppercase"><button class="tbtn" type="submit">Beitreten</button></form>`;
+  }
+
   function render() {
     $('tMode').hidden = LIVE;
-    renderAccount(); renderBonus(); renderMatches(); renderBoard();
+    renderAccount(); renderBonus(); renderMatches(); renderBoard(); renderGroups();
+  }
+  async function shareGroup(code, name) {
+    const url = INVITE_URL(code), text = `Tipp mit mir die Darts-WM 2026/27 in unserer Tipprunde „${name}“ – kostenlos:`;
+    if (navigator.share) { try { await navigator.share({ title: 'Darts-WM Tipprunde', text, url }); } catch (e) {} return; }
+    try { await navigator.clipboard.writeText(`${text} ${url}`); say('Einladungslink kopiert – jetzt z. B. in WhatsApp einfügen.'); }
+    catch (e) { prompt('Diesen Link teilen:', url); }
   }
 
   /* ---------- Aktionen ---------- */
@@ -164,6 +215,20 @@
       const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + '/#tippspiel' } });
       say(error ? 'Link konnte nicht gesendet werden: ' + error.message : `Check dein Postfach: Der Login-Link ist an ${email} unterwegs.`, !!error);
     }
+    if (e.target.id === 'tgNew') {
+      e.preventDefault();
+      const n = $('tgName').value.trim();
+      const r = await sb.rpc('create_tip_group', { p_name: n });
+      if (r.error) { say(r.error.message, true); return; }
+      say(`Tipprunde „${n}“ erstellt. Jetzt Link teilen!`); view = r.data; await refresh(); shareGroup(r.data, n);
+    }
+    if (e.target.id === 'tgJoin') {
+      e.preventDefault();
+      const c = $('tgCode').value.trim().toUpperCase();
+      const r = await sb.rpc('join_tip_group', { p_code: c });
+      if (r.error) { say(r.error.message, true); return; }
+      say(`Du bist jetzt in der Tipprunde „${r.data}“.`); view = c; await refresh();
+    }
     if (e.target.id === 'tName') {
       e.preventDefault();
       const n = $('tN').value.trim();
@@ -180,13 +245,21 @@
       await refresh();
     }
     if (e.target.id === 'tBonusSave') saveBonus();
+    const d = e.target.dataset || {};
+    if (d.gshare) shareGroup(d.gshare, d.gname);
+    if (d.gview) { view = d.gview; await loadView(); renderBoard(); $('tBoard').closest('.tcard').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    if (d.gleave && confirm('Tipprunde wirklich verlassen? Deine Tipps bleiben erhalten.')) {
+      const r = await sb.rpc('leave_tip_group', { p_code: d.gleave });
+      if (r.error) say(r.error.message, true); else { if (view === d.gleave) view = ''; say('Tipprunde verlassen.'); await refresh(); }
+    }
   });
+  document.addEventListener('change', async e => { if (e.target.id === 'tBoardSel') { view = e.target.value; await loadView(); renderBoard(); } });
   $('tMatches').addEventListener('change', e => { const m = e.target.dataset.m; if (m) saveMatch(+m); });
 
   /* ---------- Start ---------- */
   if (LIVE) {
     sb.auth.onAuthStateChange((_ev, session) => { const u = session?.user || null; if ((u && u.id) !== (user && user.id)) { user = u; refresh(); } });
     sb.auth.getSession().then(({ data }) => { user = data.session?.user || null; refresh(); });
-    setInterval(() => loadPublic().then(renderBoard).catch(() => {}), 60000);
+    setInterval(() => loadPublic().then(loadView).then(renderBoard).catch(() => {}), 60000);
   } else refresh();
 })();

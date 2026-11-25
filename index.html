@@ -12,10 +12,18 @@
 <meta property="og:description" content="News, Spielplan und Ergebnisse zur Darts-WM 2026/27, kostenloses Tippspiel, Checkout-Rechner und Scorer.">
 <meta property="og:url" content="https://dartsaktuell.com/">
 <meta name="theme-color" content="#136b3a">
+<meta property="og:image" content="https://dartsaktuell.com/img/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Darts aktuell – News, WM-Spielplan und Tippspiel">
+<meta property="og:locale" content="de_DE">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="Darts aktuell">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Ccircle cx='13' cy='13' r='12' fill='%230b4426'/%3E%3Ccircle cx='13' cy='13' r='8' fill='%23efe3c4'/%3E%3Ccircle cx='13' cy='13' r='4' fill='%23e1262f'/%3E%3C/svg%3E">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Darts aktuell","url":"https://dartsaktuell.com/","inLanguage":"de-DE"}</script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Barlow:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/fonts/fonts.css">
 <link rel="stylesheet" href="/style.css">
 
 </head>
@@ -97,12 +105,18 @@
     <div style="display:grid;gap:18px">
       <div class="tcard">
         <div class="trow" style="justify-content:space-between"><h3>Rangliste</h3><span class="note" id="tBoardNote"></span></div>
+        <div class="trow" id="tBoardPick" hidden><label for="tBoardSel" class="note">Anzeigen:</label><select id="tBoardSel"></select></div>
         <div class="scroll"><table class="tboard"><thead><tr><th class="r">#</th><th>Spieler</th><th class="r" title="Exakte Treffer">Exakt</th><th class="r">Bonus</th><th class="r">Punkte</th></tr></thead><tbody id="tBoard"></tbody></table></div>
+      </div>
+      <div class="tcard" id="tGroupsCard">
+        <h3>Private Tipprunden</h3>
+        <p class="note" style="margin:0 0 10px">Eigene Rangliste mit Freunden, Familie oder Verein: Runde erstellen, Link teilen, fertig. Alle tippen ganz normal mit, die Runde zeigt nur eure Plätze.</p>
+        <div id="tGroups"></div>
       </div>
       <div class="tcard">
         <h3>So gibt's Punkte</h3>
         <ul class="trules"><li>Exaktes Satzergebnis: 4 Punkte</li><li>Richtiger Sieger: 2 Punkte</li><li>Langzeit-Tipps: Punkte laut Frage, Tippschluss zum Turnierstart</li><li>Gleichstand: mehr exakte Treffer liegen vorne</li></ul>
-        <p class="note" style="margin:0">Teilnahme kostenlos, kein Einsatz. <a href="teilnahmebedingungen.html">Teilnahmebedingungen</a></p>
+        <p class="note" style="margin:0">Teilnahme kostenlos, kein Einsatz. <a href="/teilnahmebedingungen.html">Teilnahmebedingungen</a></p>
       </div>
     </div>
   </div>
