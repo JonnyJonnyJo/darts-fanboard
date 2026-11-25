@@ -14,7 +14,7 @@ const TZ = 'Europe/Berlin';
 const rd = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const safeUrl = u => /^https?:\/\//i.test(String(u || '')) ? String(u) : '';
-const write = (rel, content) => { const p = path.join(OUT, rel); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, content); };
+const write = (rel, content) => { const p = path.join(OUT, rel); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, rel.endsWith('.html') ? localize(content) : content); };
 
 /* ---------- Daten laden ---------- */
 const cfg = rd('config.js');
@@ -66,7 +66,7 @@ let index = rd('index.html');
 const headEnd = index.indexOf('</head>');
 const head = index.slice(0, headEnd);
 const navStart = index.indexOf('<nav>'), navEnd = index.indexOf('</nav>') + 6;
-const nav = index.slice(navStart, navEnd).replace(/href="#(turniere|geschichte)"/g, 'href="/#$1"');
+const nav = index.slice(navStart, navEnd);
 const footStart = index.indexOf('<footer'), footEnd = index.indexOf('</footer>') + 9;
 const footer = index.slice(footStart, footEnd);
 const section = id => {
@@ -119,9 +119,46 @@ const cardHtml = (n, h = 'h3') => `<article class="ncard">${meta(n)}<${h}><a hre
 /* ---------- Ausgabe ---------- */
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.mkdirSync(OUT, { recursive: true });
-for (const f of ['admin.html', 'impressum.html', 'datenschutz.html', 'teilnahmebedingungen.html', 'config.js', 'tippspiel.js', 'news.js', 'app.js', 'style.css', 'CNAME'])
+for (const f of ['admin.html', 'impressum.html', 'datenschutz.html', 'teilnahmebedingungen.html', 'config.js', 'tippspiel.js', 'news.js', 'app.js', 'style.css', 'CNAME', 'manifest.webmanifest'])
   if (fs.existsSync(path.join(ROOT, f))) fs.copyFileSync(path.join(ROOT, f), path.join(OUT, f));
 fs.cpSync(path.join(ROOT, 'data'), path.join(OUT, 'data'), { recursive: true });
+if (fs.existsSync(path.join(ROOT, 'img'))) fs.cpSync(path.join(ROOT, 'img'), path.join(OUT, 'img'), { recursive: true });
+
+/* ---------- Schriften & Bibliothek selbst ausliefern (keine Verbindung zu Google/jsDelivr beim Besuch) ---------- */
+const CDN_SB = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js';
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
+fs.mkdirSync(path.join(OUT, 'fonts'), { recursive: true });
+let fontCss = '/* Systemschriften als Ersatz */\n';
+try {
+  const css = await (await fetch('https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Barlow:wght@400;500;700&display=swap', { headers: { 'User-Agent': UA } })).text();
+  const blocks = css.split('/* ').filter(x => x.startsWith('latin */'));
+  if (!blocks.length) throw new Error('keine latin-Schriften');
+  const out = [];
+  for (const bl of blocks) {
+    const fam = bl.match(/font-family: '([^']+)'/)[1], w = bl.match(/font-weight: (\d+)/)[1], u = bl.match(/url\((https:[^)]+)\)/)[1], ur = bl.match(/unicode-range: ([^;]+)/)[1];
+    const file = `${fam.toLowerCase()}-${w}.woff2`;
+    const r = await fetch(u); if (!r.ok) throw new Error('Schrift ' + r.status);
+    fs.writeFileSync(path.join(OUT, 'fonts', file), Buffer.from(await r.arrayBuffer()));
+    out.push(`@font-face{font-family:'${fam}';font-style:normal;font-weight:${w};font-display:swap;src:url(/fonts/${file}) format('woff2');unicode-range:${ur}}`);
+  }
+  fontCss = out.join('\n') + '\n';
+  console.log(`Schriften lokal: ${out.length}`);
+} catch (err) { console.warn('Schriften nicht geladen, nutze Systemschriften:', err.message); }
+fs.writeFileSync(path.join(OUT, 'fonts', 'fonts.css'), fontCss);
+let SB_SRC = CDN_SB;
+try {
+  const r = await fetch(CDN_SB); if (!r.ok) throw new Error(r.status);
+  const js = await r.text(); if (js.length < 50000) throw new Error('zu klein');
+  fs.mkdirSync(path.join(OUT, 'vendor'), { recursive: true });
+  fs.writeFileSync(path.join(OUT, 'vendor', 'supabase.js'), js);
+  SB_SRC = '/vendor/supabase.js';
+  console.log('supabase-js lokal');
+} catch (err) {
+  if (process.env.CI) { console.error('supabase-js konnte nicht geladen werden – Abbruch, die alte Version bleibt online:', err.message); process.exit(1); }
+  console.warn('supabase-js bleibt auf jsDelivr:', err.message);
+}
+const localize = html => html.split(CDN_SB).join(SB_SRC);
+if (fs.existsSync(path.join(OUT, 'admin.html'))) fs.writeFileSync(path.join(OUT, 'admin.html'), localize(fs.readFileSync(path.join(OUT, 'admin.html'), 'utf8')));
 
 // Startseite: News fest einbauen
 const li = Math.max(0, data.news.findIndex(n => n.top));
