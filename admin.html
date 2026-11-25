@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Tippspiel-Verwaltung</title>
+<style>
+:root{--g:#136b3a;--r:#e1262f;--bg:#f7f1e3;--card:#fffaf0;--line:#e3d9c2;--ink:#122017;--soft:#4d5a50}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,sans-serif}
+header{background:var(--g);color:#fff;padding:16px max(4vw,16px);font-weight:700;font-size:20px}
+main{max-width:1100px;margin:0 auto;padding:24px max(4vw,16px);display:grid;gap:20px}
+section{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;display:grid;gap:12px}
+h2{margin:0;font-size:20px;color:var(--g)}
+input,select,textarea,button{font:inherit;font-size:16px}
+input,select,textarea{min-height:44px;border:1px solid var(--line);border-radius:10px;padding:0 10px;background:#fff;color:var(--ink)}
+textarea{padding:10px;min-height:160px;width:100%;font-family:ui-monospace,monospace;font-size:14px}
+button{min-height:44px;border-radius:10px;border:0;padding:0 16px;font-weight:700;cursor:pointer;background:var(--g);color:#fff}
+button.sec{background:#fff;color:var(--ink);border:1px solid var(--line)}button.del{background:#fff;color:var(--r);border:1px solid var(--line)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.note{color:var(--soft);font-size:14px;margin:0}
+#msg{font-weight:700;min-height:24px}
+table{width:100%;border-collapse:collapse;font-size:15px}
+td,th{text-align:left;padding:6px;border-bottom:1px solid var(--line);vertical-align:middle}
+td input[type=number]{width:60px;text-align:center}
+.scroll{overflow-x:auto}
+:focus-visible{outline:3px solid #ffd54a;outline-offset:2px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header>Tippspiel-Verwaltung · Darts-WM 2026/27</header>
+<main>
+  <p id="msg" aria-live="polite"></p>
+  <section id="login" hidden>
+    <h2>Anmelden</h2>
+    <form class="row" id="loginForm"><input id="email" type="email" required placeholder="Admin-E-Mail" autocomplete="email"><button type="submit">Login-Link senden</button></form>
+    <p class="note">Nach dem Klick auf den Link in der E-Mail landest du wieder hier. Dein Konto muss in Supabase als Admin markiert sein (siehe Anleitung).</p>
+  </section>
+
+  <div id="admin" hidden style="display:grid;gap:20px">
+    <section>
+      <div class="row" style="justify-content:space-between"><h2>Spiele importieren</h2><button class="sec" id="logout" type="button">Abmelden</button></div>
+      <p class="note">Eine Zeile pro Spiel: <b>Runde;Datum Uhrzeit;Spieler 1;Spieler 2</b> – Zeit in deutscher Zeit. Die Satzdistanz ergibt sich aus der Runde.</p>
+      <textarea id="csv" placeholder="1. Runde;11.12.2026 20:00;Luke Littler;Max Mustermann&#10;1. Runde;11.12.2026 20:00;Spieler C;Spieler D"></textarea>
+      <div class="row"><button id="import" type="button">Spiele anlegen</button><span class="note" id="csvInfo"></span></div>
+    </section>
+
+    <section>
+      <h2>News veröffentlichen</h2>
+      <p class="note">Neue Meldungen erscheinen oben auf der Startseite vor den fest eingebauten. Mit „Top-Meldung“ landet sie im großen Kasten ganz oben. Bitte eigene Worte verwenden und die Quelle verlinken.</p>
+      <form id="newsForm" style="display:grid;gap:8px">
+        <div class="row"><input id="nTag" placeholder="Rubrik, z. B. WM 2026/27" maxlength="40" required style="flex:1 1 200px"><input id="nDate" type="date" required style="flex:0 1 180px"><label class="row" style="gap:6px"><input id="nTop" type="checkbox" style="min-height:auto;width:20px;height:20px"> Top-Meldung</label></div>
+        <input id="nTitle" placeholder="Überschrift" maxlength="140" required>
+        <textarea id="nText" placeholder="Kurzer Text (2–3 Sätze)" maxlength="600" required style="min-height:90px;font-family:inherit;font-size:16px"></textarea>
+        <div class="row"><input id="nUrl" type="url" placeholder="Link zur Quelle (https://…)" style="flex:1 1 300px"><input id="nSrc" placeholder="Name der Quelle" maxlength="60" style="flex:0 1 200px"></div>
+        <div><button type="submit">News veröffentlichen</button></div>
+      </form>
+      <div class="scroll"><table><thead><tr><th>Datum</th><th>Rubrik</th><th>Überschrift</th><th></th></tr></thead><tbody id="newsRows"></tbody></table></div>
+    </section>
+
+    <section>
+      <h2>Ergebnisse eintragen</h2>
+      <p class="note">Ergebnis eintragen und speichern – die Rangliste rechnet sofort neu. Feld leeren und speichern macht ein Ergebnis rückgängig.</p>
+      <div class="scroll"><table><thead><tr><th>Runde</th><th>Anwurf</th><th>Spieler 1</th><th>Sätze</th><th></th><th>Spieler 2</th><th></th></tr></thead><tbody id="matches"></tbody></table></div>
+    </section>
+
+    <section>
+      <h2>Langzeit-Tipps auflösen</h2>
+      <p class="note">Richtige Antwort eintragen. Mehrere Schreibweisen mit | trennen, z. B. <b>Luke Littler|Littler</b>. Groß- und Kleinschreibung ist egal.</p>
+      <div id="questions" style="display:grid;gap:10px"></div>
+    </section>
+  </div>
+</main>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+{
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const C=window.DARTS_CONFIG||{};
+const say=(t,bad)=>{$('msg').textContent=t;$('msg').style.color=bad?'#e1262f':'#136b3a'};
+const BO={'1. Runde':5,'2. Runde':5,'3. Runde':7,'Achtelfinale':7,'Viertelfinale':9,'Halbfinale':11,'Finale':13};
+if(!C.supabaseUrl||!C.supabaseAnonKey||!window.supabase){say('config.js ist noch nicht ausgefüllt – siehe Anleitung.',true)}
+else{
+const sb=window.supabase.createClient(C.supabaseUrl,C.supabaseAnonKey);
+let user=null;
+const fmt=d=>new Date(d).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Berlin'});
+
+// "11.12.2026 20:00" in deutscher Zeit -> ISO mit korrektem Offset (Winterzeit +01:00)
+const toISO=s=>{const m=s.trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})\s+(\d{1,2}):(\d{2})$/);if(!m)return null;
+  const p=n=>String(n).padStart(2,'0');return `${m[3]}-${p(m[2])}-${p(m[1])}T${p(m[4])}:${m[5]}:00+01:00`};
+
+async function load(){
+  const {data:{session}}=await sb.auth.getSession();user=session?.user||null;
+  if(!user){$('login').hidden=false;$('admin').hidden=true;return}
+  const {data:p}=await sb.from('profiles').select('is_admin,display_name').eq('id',user.id).maybeSingle();
+  if(!p?.is_admin){$('login').hidden=true;$('admin').hidden=true;say(`Angemeldet als ${user.email}, aber ohne Admin-Rechte. Siehe Anleitung, Schritt „Admin werden“.`,true);return}
+  $('login').hidden=true;$('admin').hidden=false;
+  const [m,q,nw]=await Promise.all([sb.from('matches').select('*').order('starts_at'),sb.from('bonus_questions').select('*').order('sort'),sb.from('news').select('*').order('published_at',{ascending:false}).limit(50)]);
+  $('newsRows').innerHTML=(nw.data||[]).map(x=>`<tr><td>${esc(x.published_at)}</td><td>${esc(x.tag)}${x.is_top?' · <b>Top</b>':''}</td><td>${esc(x.title)}</td><td><button type="button" class="del" data-ndel="${x.id}">Löschen</button></td></tr>`).join('')||'<tr><td colspan="4" class="note">Noch keine eigenen News.</td></tr>';
+  if(!$('nDate').value)$('nDate').value=new Date().toLocaleDateString('sv-SE',{timeZone:'Europe/Berlin'});
+  $('matches').innerHTML=(m.data||[]).map(x=>`<tr><td>${esc(x.round)}</td><td>${fmt(x.starts_at)}</td><td>${esc(x.player1)}</td>
+    <td><input type="number" min="0" max="${(x.best_of+1)/2}" id="a${x.id}" value="${x.sets1??''}" aria-label="Sätze ${esc(x.player1)}"></td>
+    <td><input type="number" min="0" max="${(x.best_of+1)/2}" id="b${x.id}" value="${x.sets2??''}" aria-label="Sätze ${esc(x.player2)}"></td>
+    <td>${esc(x.player2)}</td><td class="row"><button type="button" data-save="${x.id}">Speichern</button><button type="button" class="del" data-del="${x.id}">Löschen</button></td></tr>`).join('')||'<tr><td colspan="7" class="note">Noch keine Spiele angelegt.</td></tr>';
+  $('questions').innerHTML=(q.data||[]).map(x=>`<div class="row"><label for="q${x.id}" style="flex:1 1 280px;font-weight:700">${esc(x.question)} (${x.points} P.)</label><input id="q${x.id}" value="${esc(x.answer)}" style="flex:1 1 220px"><button type="button" data-q="${x.id}">Speichern</button></div>`).join('');
+}
+
+$('loginForm').addEventListener('submit',async e=>{e.preventDefault();
+  const {error}=await sb.auth.signInWithOtp({email:$('email').value.trim(),options:{emailRedirectTo:location.href.split('#')[0]}});
+  say(error?'Fehler: '+error.message:'Login-Link verschickt – Postfach checken.',!!error)});
+$('logout').addEventListener('click',async()=>{await sb.auth.signOut();say('Abgemeldet.');load()});
+
+$('newsForm').addEventListener('submit',async e=>{e.preventDefault();
+  const url=$('nUrl').value.trim();
+  if(url&&!/^https?:\/\//i.test(url)){say('Der Link muss mit https:// beginnen.',true);return}
+  const row={published_at:$('nDate').value,tag:$('nTag').value.trim(),title:$('nTitle').value.trim(),teaser:$('nText').value.trim(),url:url||null,source:$('nSrc').value.trim()||null,is_top:$('nTop').checked};
+  if(row.is_top)await sb.from('news').update({is_top:false}).eq('is_top',true);
+  const {error}=await sb.from('news').insert(row);
+  if(error)say('Fehler: '+error.message,true);else{say('News veröffentlicht.');e.target.reset();load()}});
+$('import').addEventListener('click',async()=>{
+  const rows=[],bad=[];
+  $('csv').value.split('\n').map(l=>l.trim()).filter(Boolean).forEach((l,i)=>{
+    const [r,d,p1,p2]=l.split(';').map(s=>(s||'').trim());const iso=toISO(d||'');
+    if(!BO[r]||!iso||!p1||!p2)bad.push(i+1);else rows.push({round:r,starts_at:iso,player1:p1,player2:p2,best_of:BO[r]})});
+  if(bad.length){say('Fehler in Zeile '+bad.join(', ')+'. Erlaubte Runden: '+Object.keys(BO).join(', '),true);return}
+  if(!rows.length)return;
+  const {error}=await sb.from('matches').insert(rows);
+  if(error)say('Fehler: '+error.message,true);else{say(rows.length+' Spiele angelegt.');$('csv').value='';load()}});
+
+document.addEventListener('click',async e=>{
+  const s=e.target.dataset.save,d=e.target.dataset.del,q=e.target.dataset.q;
+  const nd=e.target.dataset.ndel;
+  if(nd){if(e.target.textContent!=='Sicher?'){e.target.textContent='Sicher?';return}
+    const {error}=await sb.from('news').delete().eq('id',+nd);say(error?'Fehler: '+error.message:'News gelöscht.',!!error);load()}
+  if(s){const a=$('a'+s).value,b=$('b'+s).value;
+    const {error}=await sb.from('matches').update({sets1:a===''?null:+a,sets2:b===''?null:+b}).eq('id',+s);
+    say(error?'Fehler: '+error.message:'Ergebnis gespeichert.',!!error)}
+  if(d){if(e.target.textContent!=='Sicher?'){e.target.textContent='Sicher?';return}
+    const {error}=await sb.from('matches').delete().eq('id',+d);say(error?'Fehler: '+error.message:'Spiel gelöscht.',!!error);load()}
+  if(q){const v=$('q'+q).value.trim();
+    const {error}=await sb.from('bonus_questions').update({answer:v||null}).eq('id',+q);
+    say(error?'Fehler: '+error.message:'Antwort gespeichert.',!!error)}
+});
+sb.auth.onAuthStateChange(()=>load());
+load();
+}
+}
+</script>
+</body>
+</html>

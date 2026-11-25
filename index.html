@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Darts-WM 2026/27</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Barlow:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: Ally-Pally-Abend, sportlich und frisch – Variante B „Board-Grün“.
+   IDEA: Die Seite ist ein Dartboard mit Anzeigetafel: Board-Grün, Sisal-Creme, Treble-Rot.
+   PICTURE: Ein großes, klickbares Board, das gleichzeitig der 501-Scorer ist.
+   COLOUR and TYPE: Grün dominant, Creme als Fläche, Rot als Akzent, Gelb für Highlights; Oswald + Barlow.
+   LAYOUT: Grünes Band oben (Countdown, Board, Tafel), dann Spielplan als Weg in sechs Etappen, Checkout, Fakten, Weltmeister. */
+:root{color-scheme:light dark;
+  --bg:light-dark(#f7f1e3,#0f1a13);--ink:light-dark(#141714,#efe7d3);--soft:light-dark(#5b5b52,#b5ad98);
+  --card:light-dark(#fffaf0,#16241b);--line:light-dark(#e3d9c2,#2a3d30);
+  --night:#136b3a;--night2:#0e5530;--deep:#0b4426;--edge:#1d7a47;--sisal:#efe3c4;--red:#e1262f;--green:#136b3a;--gold:#ffd54a;--nink:#ffffff;--nsoft:#cfe6d6}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Barlow,system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3,.big{font-family:Oswald,Impact,sans-serif;font-weight:700;line-height:1.05;text-wrap:balance;margin:0}
+h2{font-size:clamp(32px,4.5vw,48px);text-transform:uppercase;color:light-dark(#136b3a,#7fd3a0)}
+a{color:inherit}
+.band{padding:clamp(28px,4vw,64px) max(5vw,16px)}
+.wrap{max-width:1240px;margin:0 auto}
+html{scroll-padding-top:72px;scroll-behavior:smooth}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+button,input,select{font:inherit;font-size:16px}
+button{min-height:44px;border-radius:10px;border:1px solid transparent;cursor:pointer;padding:0 16px;font-weight:700}
+:focus-visible{outline:3px solid #ffcf3f;outline-offset:2px}
+.scroll{overflow-x:auto}.scroll a{flex:none}
+
+/* nav */
+nav{position:sticky;top:0;z-index:5;background:var(--night);color:var(--nink);border-bottom:1px solid var(--edge)}
+nav .wrap{display:flex;align-items:center;gap:20px;padding:0 max(5vw,16px);min-height:60px}
+nav .logo{font-family:Oswald,sans-serif;font-weight:700;text-transform:uppercase;font-size:22px;white-space:nowrap;display:flex;align-items:center;gap:10px}
+nav .logo{flex:none}
+nav .links{display:flex;gap:4px;margin-left:auto;overflow-x:auto}
+nav .links a{flex:none;text-decoration:none;padding:10px 12px;border-radius:8px;color:var(--nsoft);font-weight:500}
+nav .links a:hover{color:var(--nink);background:var(--night2)}
+
+/* hero */
+.hero{background:var(--night);color:var(--nink)}
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:20px 40px;margin-bottom:28px}
+.top h1{font-size:clamp(40px,6vw,64px);text-transform:uppercase}
+.top h1 span{color:var(--gold)}
+.top p{margin:8px 0 0;color:var(--nsoft);max-width:58ch}
+.count{display:flex;gap:10px}
+.count div{background:var(--night2);border:1px solid var(--edge);border-radius:12px;padding:10px 12px;text-align:center;min-width:72px}
+.count b{display:block;font-family:Oswald,sans-serif;font-weight:700;font-size:clamp(28px,4vw,40px);line-height:1;font-variant-numeric:tabular-nums}
+.count small{font-size:13px;color:var(--nsoft)}
+.play{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:clamp(20px,3vw,44px);align-items:start}
+.boardbox{position:relative;aspect-ratio:1;max-width:620px;width:100%;justify-self:center}
+.boardbox svg{width:100%;height:100%;display:block;filter:drop-shadow(0 24px 40px rgba(0,0,0,.55))}
+.seg{cursor:pointer;transition:filter .12s}
+.seg:hover{filter:brightness(1.45)}
+.hit{animation:pop .35s ease-out}
+@keyframes pop{0%{opacity:.9;r:4}100%{opacity:0;r:26}}
+.boardctl{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px}
+.btn-d{background:var(--night2);color:var(--nink);border-color:var(--edge)}
+.btn-d:hover{background:var(--deep)}
+.btn-r{background:var(--red);color:#fff;border-radius:999px}
+
+/* scoreboard */
+.tafel{display:grid;gap:14px}
+.players{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.pl{background:var(--night2);border:2px solid var(--edge);border-radius:16px;padding:14px 16px;position:relative}
+.pl.on{border-color:var(--gold);box-shadow:0 0 0 4px rgba(255,213,74,.2)}
+.pl input{width:100%;background:transparent;border:0;color:var(--nink);font-weight:700;padding:4px 0;border-bottom:1px dashed #4f9a6d}
+.pl .rest{font-family:Oswald,sans-serif;font-weight:700;font-size:clamp(56px,8vw,88px);line-height:1;margin:8px 0 4px;font-variant-numeric:tabular-nums}
+.pl .legs{position:absolute;top:14px;right:16px;background:var(--red);color:#fff;border-radius:8px;padding:2px 10px;font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;font-size:13px;color:var(--nsoft)}
+.stats b{display:block;color:var(--nink);font-size:16px;font-variant-numeric:tabular-nums}
+.visit{background:var(--night2);border:1px solid var(--edge);border-radius:16px;padding:14px 16px;display:grid;gap:10px}
+.darts{display:flex;gap:8px}
+.darts span{flex:1;text-align:center;padding:10px 4px;border-radius:10px;background:var(--deep);border:1px solid var(--edge);font-weight:700;min-height:46px}
+.darts span.f{border-color:var(--gold)}
+.sug{min-height:28px;color:var(--gold)}
+.sug b{background:var(--red);color:#fff;border-radius:6px;padding:2px 8px;margin-right:4px;white-space:nowrap}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.row input,.row select{min-height:44px;border-radius:10px;border:1px solid var(--edge);background:var(--deep);color:var(--nink);padding:0 12px}
+.row input{width:7.5em}
+.msg{min-height:24px;font-weight:700;color:var(--gold)}
+.note{font-size:13px;color:var(--nsoft)}
+
+/* checkout */
+.co{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:clamp(20px,4vw,56px);align-items:center;margin-top:24px}
+.co label{font-weight:700;display:block;margin-bottom:8px}
+.co input[type=number]{width:100%;min-height:56px;font-size:28px;font-weight:700;border-radius:12px;border:2px solid var(--line);background:var(--card);color:var(--ink);padding:0 16px}
+.co input[type=range]{width:100%;accent-color:var(--red);margin-top:18px;min-height:44px}
+.presets{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.presets button{background:var(--card);border-color:var(--line);color:var(--ink)}
+.cores{background:var(--card);color:var(--ink);border:2px solid light-dark(#136b3a,#2f8a57);border-radius:20px;padding:clamp(20px,3vw,36px);min-height:240px;display:flex;flex-direction:column;justify-content:center}
+.cores .num{font-family:Oswald,sans-serif;font-weight:700;font-size:clamp(64px,10vw,120px);line-height:1}
+.route{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.route span{font-family:Oswald,sans-serif;font-weight:700;font-size:clamp(26px,4vw,40px);padding:6px 18px;border-radius:12px;background:light-dark(#3b4a40,#2a3d30);color:#fff}
+.route span.dbl{background:var(--red)}
+.route span.tr{background:var(--green)}
+
+/* facts */
+.facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:24px}
+.fact{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+.fact .big{font-size:clamp(30px,3.6vw,42px);color:var(--red)}
+.fact p{margin:6px 0 0;color:var(--soft)}
+.champ{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:clamp(20px,4vw,56px);margin-top:28px;align-items:start}
+.cup{background:var(--red);color:#fff;border-radius:20px;padding:clamp(20px,3vw,32px)}
+.cup h3{font-size:clamp(32px,4vw,44px);text-transform:uppercase}
+.cup p{margin:10px 0 0}
+.cup .score{font-family:Oswald,sans-serif;font-weight:700;font-size:clamp(48px,7vw,80px);line-height:1;margin-top:14px}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line)}
+th{font-size:13px;color:var(--soft);font-weight:500}
+td.r,th.r{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+td:first-child{font-weight:700;white-space:nowrap}
+footer{background:var(--night);color:var(--nsoft);font-size:14px}
+/* news */
+.newshead h1{font-size:clamp(40px,6vw,64px);text-transform:uppercase}
+.newshead h1 span{color:var(--gold)}
+.newshead p{margin:8px 0 0;color:var(--nsoft);font-size:18px}
+.newsgrid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:20px;margin-top:24px;align-items:stretch}
+.lead{background:var(--night2);border:1px solid var(--edge);border-radius:20px;padding:clamp(20px,3vw,36px);display:flex;flex-direction:column;justify-content:center;gap:14px}
+.lead h2{font-size:clamp(30px,4vw,48px);color:#fff;text-transform:none}
+.lead p{margin:0;font-size:18px;color:#e6f2ea;max-width:60ch}
+.lead .src a{color:var(--gold)}
+.meta{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.tag{background:var(--gold);color:#122017;font-weight:700;font-size:13px;border-radius:999px;padding:2px 10px}
+.when{font-size:14px;color:var(--nsoft)}
+.src{font-size:14px;color:var(--nsoft)}
+.wmbox{background:#fffaf0;color:#122017;border-radius:20px;padding:clamp(18px,2.4vw,26px);display:grid;gap:14px;align-content:start}
+.wmbox h2{font-size:28px;color:#136b3a}
+.wmbox #countLabel{margin:0;color:#4d5a50}
+.wmbox .count div{background:#136b3a;border-color:#136b3a;color:#fff;min-width:0;flex:1}
+.wmbox .count small{color:#cfe6d6}
+.wmfacts{list-style:none;margin:0;padding:0}
+.wmfacts li{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #e3d9c2}
+.wmfacts span{white-space:nowrap}
+.btn-y{background:var(--red);color:#fff;text-decoration:none;font-weight:700;padding:0 18px;border-radius:999px;display:inline-flex;align-items:center;min-height:44px}
+.newslist{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:20px}
+.ncard{background:#fffaf0;color:#122017;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:8px}
+.ncard h3{font-size:22px;line-height:1.15}
+.ncard p{margin:0;color:#4d5a50;font-size:15px;flex:1}
+.ncard .when,.ncard .src{color:#5b675f}.ncard .src a{color:#136b3a}
+/* kalender */
+.cal{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:clamp(20px,4vw,48px);margin-top:24px;align-items:start}
+.calh{font-size:24px;text-transform:uppercase;margin-bottom:12px}
+.next{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.next li{display:grid;grid-template-columns:120px minmax(0,1fr) auto;gap:14px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 16px}
+.next li.on{border-color:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 20%,transparent)}
+.next .dt{font-family:Oswald,sans-serif;font-weight:700;font-size:20px;line-height:1.1;color:light-dark(#136b3a,#7fd3a0)}
+.next .dt small{font-size:13px;color:var(--soft)}
+.next .nm{font-weight:700}.next .ort{font-size:14px;color:var(--soft)}
+.badge{font-size:13px;font-weight:700;border-radius:999px;padding:2px 10px;white-space:nowrap}
+.badge.live{background:var(--red);color:#fff}.badge.new{background:var(--gold);color:#122017}.badge.wm{background:var(--green);color:#fff}
+#spiel h2{color:#fff}
+#spiel .top p{margin:8px 0 0;color:var(--nsoft);max-width:60ch}
+#spiel{border-top:0}
+@media(max-width:900px){.newsgrid,.cal{grid-template-columns:minmax(0,1fr)}.newslist{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.newslist{grid-template-columns:minmax(0,1fr)}.next li{grid-template-columns:minmax(0,1fr) auto}.next .dt{grid-column:1/-1}}
+.upd{display:inline-block;font-size:14px;background:var(--night2);border:1px solid var(--edge);border-radius:999px;padding:1px 10px;margin-left:4px;white-space:nowrap}
+.upd:empty{display:none}
+.days{display:flex;gap:8px;padding-bottom:6px}
+.dchip{flex:none;background:var(--card);border-color:var(--line);color:var(--ink);font-weight:700}
+.dchip.on{background:var(--green);border-color:var(--green);color:#fff}
+.games{list-style:none;margin:12px 0 0;padding:0;max-width:760px}
+.games .sess{font-weight:700;color:var(--soft);font-size:14px;padding:14px 0 4px}
+.games .gm{display:grid;grid-template-columns:minmax(0,1fr) 64px minmax(0,1fr);gap:12px;align-items:center;padding:10px 14px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:6px}
+.games .p1{text-align:right}.games .win{font-weight:700}
+.games .sc{font-family:Oswald,sans-serif;font-weight:700;font-size:20px;text-align:center;font-variant-numeric:tabular-nums}
+/* spielplan */
+.phases{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:24px}
+.ph{border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:10px;background:var(--card);border:1px solid var(--line)}
+.ph.g{background:var(--green);color:#fff;border-color:var(--green)}.ph.r{background:var(--red);color:#fff;border-color:var(--red)}.ph.f{background:light-dark(#122017,#f7f1e3);color:light-dark(#f7f1e3,#122017);border-color:transparent}
+.ph h3{font-size:24px;text-transform:uppercase;line-height:1.1}
+.ph>div:first-child{flex-wrap:wrap}
+#checkout .note{color:var(--soft)}
+@media(max-width:900px){.phases{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.phases{grid-template-columns:minmax(0,1fr)}}
+.ph .bo{font-size:13px;font-weight:700;white-space:nowrap;opacity:.85}
+.ph .sp{font-size:14px;font-weight:700;opacity:.85}
+.ph ul{list-style:none;margin:0;padding:0;font-size:14px;font-variant-numeric:tabular-nums}
+.ph li{display:flex;justify-content:space-between;gap:8px;border-top:1px solid color-mix(in srgb,currentColor 18%,transparent);padding:4px 0}
+.ph li b{white-space:nowrap}.ph li span{white-space:nowrap}
+.today{outline:3px solid var(--gold);outline-offset:2px}
+/* tippspiel */
+.tgrid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:clamp(20px,3vw,40px);margin-top:24px;align-items:start}
+.tcard{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:clamp(16px,2.4vw,24px);display:grid;gap:14px}
+.tcard h3{font-size:24px;text-transform:uppercase}
+.trow{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.trow label{width:100%;font-weight:700}
+.tcard input,.tcard select{min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:0 12px}
+.trow input{flex:1 1 220px}
+.tbtn{background:var(--bg);border-color:var(--line);color:var(--ink)}
+.tq{display:grid;gap:6px;padding-top:12px;border-top:1px solid var(--line)}
+.tq label{font-weight:700}.tq input,.tq select{width:100%}
+.tpts{background:var(--green);color:#fff;border-radius:6px;padding:1px 7px;font-size:13px;white-space:nowrap}
+.tres{font-weight:700;color:var(--green);white-space:nowrap}
+.tm{display:grid;grid-template-columns:minmax(0,1fr) 64px auto 64px minmax(0,1fr) auto;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
+.tm .tp{font-weight:700;overflow-wrap:anywhere}.tm .tp:nth-of-type(2){text-align:right}
+.tm input{width:64px;text-align:center}
+.tcard h4{margin:8px 0 0;font-family:Oswald,sans-serif;text-transform:uppercase;color:var(--green)}
+.tboard td,.tboard th{padding:8px 6px}.tboard tr.me td{background:color-mix(in srgb,var(--gold) 30%,transparent)}
+.tmode{background:color-mix(in srgb,var(--gold) 35%,var(--card));border-radius:12px;padding:10px 14px;font-size:14px}
+.trules{font-size:14px;color:var(--soft);margin:0;padding-left:18px}
+.tcard a{color:var(--green)}
+.tcard .note,#tippspiel .note{color:var(--soft)}
+@media(max-width:900px){.tgrid{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:520px){.tm{grid-template-columns:minmax(0,1fr) 56px auto 56px minmax(0,1fr)}.tm>.tres,.tm>.note{grid-column:1/-1}.tm input{width:56px}}
+footer a{color:var(--nink)}
+footer ul{margin:8px 0 0;padding-left:18px}
+
+@media(max-width:900px){.play,.co,.champ{grid-template-columns:minmax(0,1fr)}.facts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){
+  table{font-size:13px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px}.stack td{display:flow-root;border:0;padding:3px 0;padding-inline-start:8em;text-align:start}.stack td::before{content:attr(data-l);float:inline-start;width:7.5em;margin-inline-start:-8em;white-space:normal;color:var(--soft);font-weight:500}.stack td:empty{display:none}
+  .count div{min-width:0;flex:1;padding:8px 6px}.count{width:100%}
+  .facts{grid-template-columns:minmax(0,1fr)}
+  nav .logo span{display:none}
+}
+</style>
+<script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
+</head>
+<body>
+<nav><div class="wrap">
+  <div class="logo"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="12" fill="#0b4426"/><circle cx="13" cy="13" r="8" fill="#efe3c4"/><circle cx="13" cy="13" r="4" fill="#e1262f"/></svg>Ally Pally <span style="color:var(--gold)">Fanboard</span></div>
+  <div class="links scroll"><a href="#news">News</a><a href="#turniere">Turniere</a><a href="#spielplan">WM-Spielplan</a><a href="#tippspiel">Tippspiel</a><a href="#spiel">Scorer</a><a href="#checkout">Checkout</a><a href="#geschichte">Weltmeister</a></div>
+</div></nav>
+
+<section class="hero band" id="news"><div class="wrap">
+  <div class="newshead">
+    <h1>Darts-News <span>&amp; WM 2026/27</span></h1>
+    <p>Alles rund um die Ally-Pally-WM und die großen PDC-Turniere. <span id="newsUpdated" class="upd"></span></p>
+  </div>
+  <div class="newsgrid">
+    <article class="lead" id="newsLead"></article>
+    <aside class="wmbox" aria-label="WM kompakt">
+      <h2>WM kompakt</h2>
+      <p id="countLabel">Countdown bis zum ersten Pfeil am 11. Dezember im Alexandra Palace.</p>
+      <div class="count" id="count" aria-live="polite">
+        <div><b id="cd">–</b><small>Tage</small></div><div><b id="ch">–</b><small>Std</small></div><div><b id="cm">–</b><small>Min</small></div><div><b id="cs">–</b><small>Sek</small></div>
+      </div>
+      <ul class="wmfacts">
+        <li><b>Auslosung</b><span>Mo 30.11., 17:30</span></li>
+        <li><b>Eröffnung</b><span>Fr 11.12., 20:00</span></li>
+        <li><b>Finale</b><span>So 3.1., 21:00</span></li>
+        <li><b>Titelverteidiger</b><span>Luke Littler</span></li>
+        <li><b>Preisgeld</b><span>£5 Mio.</span></li>
+      </ul>
+      <div class="row"><a class="btn-y" href="#spielplan">Spielplan</a><a class="btn-y" href="#tippspiel">Jetzt tippen</a></div>
+    </aside>
+  </div>
+  <div class="newslist" id="newsList"></div>
+</div></section>
+
+<section class="band" id="turniere"><div class="wrap">
+  <h2>Turnierkalender</h2>
+  <p style="color:var(--soft);max-width:70ch;margin:8px 0 0">Die nächsten großen PDC-Turniere und wer 2026 die Titel geholt hat.</p>
+  <div class="cal">
+    <div>
+      <h3 class="calh">Als Nächstes</h3>
+      <ol class="next" id="calNext"></ol>
+      <button class="tbtn" id="calMore" type="button" style="margin-top:12px">Alle Termine</button>
+    </div>
+    <div>
+      <h3 class="calh"><span id="calSeason">Sieger</span> <small style="font-family:Barlow,sans-serif;font-weight:500;font-size:14px;text-transform:none;color:var(--soft)">Auswahl</small></h3>
+      <table class="stack"><thead><tr><th>Turnier</th><th>Sieger</th><th>Finale</th></tr></thead><tbody id="calWin"></tbody></table>
+    </div>
+  </div>
+</div></section>
+
+<section class="band" id="spielplan"><div class="wrap">
+  <h2>Der Weg zur Sid Waddell Trophy</h2>
+  <p style="color:var(--soft);max-width:70ch;margin:8px 0 0">Sieben Runden, 36 Sessions, alle Zeiten deutsche Zeit. Spielfrei vom 24. bis 26. Dezember und an Silvester. Die Paarungen folgen nach der Auslosung.</p>
+  <div class="phases" id="phases"></div>
+  <div id="wmGames" hidden style="margin-top:32px">
+    <h3 class="calh">Paarungen &amp; Ergebnisse</h3>
+    <div class="days scroll" id="wmDays" role="group" aria-label="Spieltag wählen"></div>
+    <ol class="games" id="wmList"></ol>
+  </div>
+</div></section>
+
+<section class="band" id="tippspiel" style="border-top:1px solid var(--line)"><div class="wrap">
+  <h2>WM-Tippspiel</h2>
+  <p style="color:var(--soft);max-width:70ch;margin:8px 0 0">Kostenlos mitspielen, Weltmeister tippen, jedes Spiel tippen und in der Rangliste nach oben klettern. Tippschluss für jedes Spiel ist der Anwurf.</p>
+  <div class="tmode" id="tMode" hidden style="margin-top:16px">Demo-Modus: Deine Tipps werden nur in diesem Browser gespeichert. Für die öffentliche Rangliste wird die Seite mit dem Tippspiel-Server verbunden.</div>
+  <div class="tgrid">
+    <div style="display:grid;gap:18px">
+      <div class="tcard"><div id="tAccount"></div><div class="msg" id="tMsg" aria-live="polite" style="color:var(--green)"></div></div>
+      <div class="tcard">
+        <h3>Langzeit-Tipps</h3>
+        <div id="tBonus"></div>
+        <div><button class="btn-r" id="tBonusSave" type="button">Bonus-Tipps speichern</button></div>
+      </div>
+      <div class="tcard"><h3>Spiel-Tipps</h3><div id="tMatches"></div></div>
+    </div>
+    <div style="display:grid;gap:18px">
+      <div class="tcard">
+        <div class="trow" style="justify-content:space-between"><h3>Rangliste</h3><span class="note" id="tBoardNote"></span></div>
+        <div class="scroll"><table class="tboard"><thead><tr><th class="r">#</th><th>Spieler</th><th class="r" title="Exakte Treffer">Exakt</th><th class="r">Bonus</th><th class="r">Punkte</th></tr></thead><tbody id="tBoard"></tbody></table></div>
+      </div>
+      <div class="tcard">
+        <h3>So gibt's Punkte</h3>
+        <ul class="trules"><li>Exaktes Satzergebnis: 4 Punkte</li><li>Richtiger Sieger: 2 Punkte</li><li>Langzeit-Tipps: Punkte laut Frage, Tippschluss zum Turnierstart</li><li>Gleichstand: mehr exakte Treffer liegen vorne</li></ul>
+        <p class="note" style="margin:0">Teilnahme kostenlos, kein Einsatz. <a href="teilnahmebedingungen.html">Teilnahmebedingungen</a></p>
+      </div>
+    </div>
+  </div>
+  <datalist id="tPlayers"><option>Luke Littler</option><option>Luke Humphries</option><option>Gian van Veen</option><option>Michael van Gerwen</option><option>Gerwyn Price</option><option>Gary Anderson</option><option>Ryan Searle</option><option>Peter Wright</option><option>Michael Smith</option><option>Martin Schindler</option></datalist>
+</div></section>
+
+<section class="hero band" id="spiel"><div class="wrap">
+  <div class="top">
+    <div>
+      <h2>Selbst werfen</h2>
+      <p>501-Scorer fürs eigene Board: aufs Feld klicken, Rest und Average laufen mit, der Finish-Weg wird vorgeschlagen.</p>
+    </div>
+  </div>
+
+  <div class="play">
+    <div>
+      <div class="boardbox"><svg id="board" viewBox="-230 -230 460 460" role="group" aria-label="Dartboard – auf ein Feld klicken, um einen Wurf einzutragen"></svg></div>
+      <div class="boardctl">
+        <button class="btn-d" id="miss">Daneben (0)</button>
+        <button class="btn-d" id="undo">Rückgängig</button>
+        <button class="btn-d" id="newleg">Neues Spiel</button>
+      </div>
+    </div>
+
+    <div class="tafel">
+      <div class="players" id="players"></div>
+      <div class="visit">
+        <div class="row" style="justify-content:space-between"><b id="turn">Am Board</b><span class="note" id="visitsum"></span></div>
+        <div class="darts" id="darts"></div>
+        <div class="sug" id="sug"></div>
+        <div class="msg" id="msg" aria-live="polite"></div>
+      </div>
+      <div class="visit">
+        <form class="row" id="quick">
+          <label for="qv">Ganze Aufnahme eintippen</label>
+          <input id="qv" type="number" min="0" max="180" inputmode="numeric" placeholder="z. B. 100">
+          <button class="btn-r" type="submit">Eintragen</button>
+        </form>
+        <div class="row">
+          <label for="start">Modus</label>
+          <select id="start"><option value="501">501 Double-Out</option><option value="301">301 Double-Out</option><option value="701">701 Double-Out</option></select>
+          <span class="note">Board anklicken: äußerer Ring = Double, innerer Ring = Treble. Spielstand bleibt in deinem Browser gespeichert.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="band" id="checkout" style="border-top:1px solid var(--line)"><div class="wrap">
+  <h2>Checkout-Rechner</h2>
+  <p style="color:var(--soft);max-width:62ch;margin:8px 0 0">Welcher Weg führt zum Finish? Der Rechner bevorzugt so wenige Darts wie möglich, die Profi-Doppel D20, D16 und D8 und die dicken Trebles oben im Board.</p>
+  <div class="co">
+    <div>
+      <label for="coin">Restpunkte</label>
+      <input id="coin" type="number" min="2" max="170" value="121" inputmode="numeric">
+      <input id="corange" type="range" min="2" max="170" value="121" aria-label="Restpunkte wählen">
+      <div class="presets" id="presets"></div>
+    </div>
+    <div class="cores" aria-live="polite">
+      <div class="num" id="conum">121</div>
+      <div class="route" id="coroute"></div>
+      <p class="note" id="conote" style="margin:14px 0 0"></p>
+    </div>
+  </div>
+</div></section>
+
+<section class="band" id="wm" style="border-top:1px solid var(--line)"><div class="wrap">
+  <h2>Die WM in Zahlen</h2>
+  <div class="facts">
+    <div class="fact"><div class="big">11.12. – 3.1.</div><p>Turnierzeitraum, Finale am Sonntag, 3. Januar 2027. Spielfrei vom 24. bis 26. Dezember und an Silvester.</p></div>
+    <div class="fact"><div class="big">128</div><p>Spieler im Feld, alle starten in der 1. Runde.</p></div>
+    <div class="fact"><div class="big">£5 Mio.</div><p>Gesamtpreisgeld, davon £1 Mio. für den Weltmeister und £400.000 für den Finalisten.</p></div>
+    <div class="fact"><div class="big">5.200+</div><p>Plätze pro Session: Erstmals wird in der Great Hall gespielt statt vor rund 3.200 Fans.</p></div>
+  </div>
+
+  <div class="champ" id="geschichte">
+    <div class="cup">
+      <p style="margin:0;opacity:.85">Titelverteidiger</p>
+      <h3>Luke Littler</h3>
+      <div class="score">7 : 1</div>
+      <p>gegen Gian van Veen im Finale am 3. Januar 2026 – mit fast 106 Punkten Average und einem 170er „Big Fish“. Es war Littlers zweiter WM-Titel in Folge und der erste Millionen-Scheck der Darts-Geschichte. Schafft er den Hattrick?</p>
+    </div>
+    <div>
+      <h2 style="font-size:clamp(28px,3.4vw,36px)">Die letzten Weltmeister</h2>
+      <table class="stack" style="margin-top:12px">
+        <thead><tr><th>WM</th><th>Weltmeister</th><th>Finalgegner</th><th class="r">Sätze</th></tr></thead>
+        <tbody id="champs"></tbody>
+      </table>
+    </div>
+  </div>
+</div></section>
+
+<footer class="band"><div class="wrap">
+  <p style="margin:0">Inoffizielle Fanseite, nicht mit der PDC verbunden. Turnierdaten Stand 25. November 2026.</p>
+  <p style="margin:8px 0 0"><a href="impressum.html">Impressum</a> · <a href="datenschutz.html">Datenschutz</a> · <a href="teilnahmebedingungen.html">Teilnahmebedingungen Tippspiel</a></p>
+  <ul>
+    <li><a href="https://www.alexandrapalace.com/whats-on/world-darts-championship-2026-2027/">Alexandra Palace – Termine</a></li>
+    <li><a href="https://darts-wm.org/nachrichten/darts-wm-spielplan/">darts-wm.org – Spielplan nach Sessions</a></li>
+    <li><a href="https://www.skysports.com/darts/news/12040/13570429/world-darts-championship-2026-27-dates-confirmed-for-alexandra-palace-with-sunday-final-in-great-hall-for-first-time">Sky Sports – Termine und Great Hall</a></li>
+    <li><a href="https://www.skysports.com/darts/news/13489993/world-darts-championship-2026-luke-littler-thrashes-gian-van-veen-in-final-to-retain-title-at-alexandra-palace">Sky Sports – WM-Finale 2026</a></li>
+  </ul>
+</div></footer>
+
+<script>
+{
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---------- Countdown ---------- */
+const START=new Date('2026-12-11T00:00:00+01:00'),END=new Date('2027-01-04T00:00:00+01:00');
+const tick=()=>{
+  const now=new Date();
+  if(now>=END){$('count').style.display='none';$('countLabel').textContent='Die WM 2026/27 ist vorbei – danke fürs Mitfiebern!';return}
+  if(now>=START){$('count').style.display='none';$('countLabel').textContent='Die WM läuft! Finale am Sonntag, 3. Januar, im Alexandra Palace.';return}
+  let s=Math.floor((START-now)/1000);
+  $('cd').textContent=Math.floor(s/86400);s%=86400;
+  $('ch').textContent=String(Math.floor(s/3600)).padStart(2,'0');s%=3600;
+  $('cm').textContent=String(Math.floor(s/60)).padStart(2,'0');
+  $('cs').textContent=String(s%60).padStart(2,'0');
+};
+tick();const timer=setInterval(tick,1000);
+
+/* ---------- Spielplan ---------- */
+const two='13:30 · 20:00';
+const PH=[
+  {c:'',n:'1. Runde',bo:'Best of 5',sp:'11.–19. Dez · 64 Spiele',d:[['Fr 11.12.','20:00','2026-12-11'],['Sa 12.12.',two,'2026-12-12'],['So 13.12.',two,'2026-12-13'],['Mo 14.12.','20:00','2026-12-14'],['Di 15.12.',two,'2026-12-15'],['Mi 16.12.',two,'2026-12-16'],['Do 17.12.',two,'2026-12-17'],['Fr 18.12.',two,'2026-12-18'],['Sa 19.12.',two,'2026-12-19']]},
+  {c:'',n:'2. Runde',bo:'Best of 5',sp:'20.–23. Dez · 32 Spiele',d:[['So 20.12.',two,'2026-12-20'],['Mo 21.12.',two,'2026-12-21'],['Di 22.12.',two,'2026-12-22'],['Mi 23.12.',two,'2026-12-23']]},
+  {c:'g',n:'3. Runde',bo:'Best of 7',sp:'27.–29. Dez · 16 Spiele',d:[['So 27.12.',two,'2026-12-27'],['Mo 28.12.',two,'2026-12-28'],['Di 29.12.',two,'2026-12-29']]},
+  {c:'g',n:'Achtelfinale',bo:'Best of 7',sp:'29.–30. Dez · 8 Spiele',d:[['Di 29.12.','20:00','2026-12-29'],['Mi 30.12.',two,'2026-12-30']]},
+  {c:'r',n:'Viertel- & Halbfinale',bo:'Bo9 / Bo11',sp:'1.–2. Januar',d:[['Fr 01.01. VF',two,'2027-01-01'],['Sa 02.01. HF','20:30','2027-01-02']]},
+  {c:'f',n:'Finale',bo:'Best of 13',sp:'Sonntag, 3. Januar',d:[['So 03.01.','21:00','2027-01-03']]}
+];
+const todayISO=new Date().toLocaleDateString('sv-SE',{timeZone:'Europe/Berlin'});
+$('phases').innerHTML=PH.map(p=>`<div class="ph ${p.c}${p.d.some(x=>x[2]===todayISO)?' today':''}"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><h3>${p.n}</h3><span class="bo">${p.bo}</span></div><div class="sp">${p.sp}</div><ul>${p.d.map(x=>`<li${x[2]===todayISO?' style="font-weight:700"':''}><b>${x[0]}</b><span>${x[1]}</span></li>`).join('')}</ul></div>`).join('');
+
+/* ---------- Checkout-Tabellen ---------- */
+const TH=[];
+for(let n=1;n<=20;n++){
+  TH.push({v:n,l:String(n),k:'s',c:1.5});
+  TH.push({v:2*n,l:'D'+n,k:'d',c:6,fin:true});
+  const tc={20:0,19:1,18:2,17:2.5,16:3,15:4}[n];
+  TH.push({v:3*n,l:'T'+n,k:'t',c:tc===undefined?7:tc});
+}
+TH.push({v:25,l:'25',k:'s',c:4});
+TH.push({v:50,l:'Bull',k:'d',c:5,fin:true});
+const RANK={D20:0,D16:.5,D18:1,D8:1.5,D12:1.5,D10:1.5,D4:2.5,D14:3,D6:4,D1:6,Bull:3.5};
+const FIN=TH.filter(t=>t.fin).map(t=>({...t,r:RANK[t.l]??4.5}));
+const B1={},B2={},B3={},pair={};
+for(const f of FIN)if(!B1[f.v]||f.r<B1[f.v].cost)B1[f.v]={cost:f.r,d:[f]};
+for(const a of TH)for(const f of FIN){const n=a.v+f.v,c=a.c+f.r;if(!B2[n]||c<B2[n].cost)B2[n]={cost:c,d:[a,f]}}
+for(const a of TH)for(const b of TH){if(a.v<b.v)continue;const n=a.v+b.v,c=a.c+b.c;if(!pair[n]||c<pair[n].c)pair[n]={c,d:[a,b]}}
+for(const f of FIN)for(const k in pair){const n=+k+f.v,c=pair[k].c+f.r;if(!B3[n]||c<B3[n].cost)B3[n]={cost:c,d:[...pair[k].d,f]}}
+const suggest=(rem,left=3)=>{
+  if(rem<2||rem>170)return null;
+  if(B1[rem])return B1[rem].d;
+  if(left>=2&&B2[rem])return B2[rem].d;
+  if(left>=3&&B3[rem])return B3[rem].d;
+  return null;
+};
+const chip=d=>`<span class="${d.k==='d'?'dbl':d.k==='t'?'tr':''}">${d.l}</span>`;
+
+/* ---------- Checkout-Rechner UI ---------- */
+const coShow=v=>{
+  v=Math.max(2,Math.min(170,Math.round(+v||2)));
+  $('conum').textContent=v;$('corange').value=v;
+  const r=suggest(v);
+  $('coroute').innerHTML=r?r.map(chip).join(''):'<span>Kein Finish</span>';
+  $('conote').textContent=r?`${r.length} ${r.length===1?'Dart':'Darts'} bis zum Leg-Gewinn.`:'Diese Zahl lässt sich mit drei Darts nicht auf einem Doppel beenden – klassische „Bogey-Number“. Stell dir lieber ein gutes Finish für die nächste Aufnahme.';
+};
+$('coin').addEventListener('input',e=>{if(e.target.value)coShow(e.target.value)});
+$('corange').addEventListener('input',e=>{$('coin').value=e.target.value;coShow(e.target.value)});
+$('presets').innerHTML=[170,167,141,121,100,81,40,32].map(n=>`<button type="button" data-n="${n}">${n}</button>`).join('');
+$('presets').addEventListener('click',e=>{const n=e.target.dataset.n;if(n){$('coin').value=n;coShow(n)}});
+coShow(121);
+
+/* ---------- Weltmeister ---------- */
+const CH=[[2026,'Luke Littler','Gian van Veen','7:1'],[2025,'Luke Littler','Michael van Gerwen','7:3'],[2024,'Luke Humphries','Luke Littler','7:4'],[2023,'Michael Smith','Michael van Gerwen','7:4'],[2022,'Peter Wright','Michael Smith','7:5'],[2021,'Gerwyn Price','Gary Anderson','7:3'],[2020,'Peter Wright','Michael van Gerwen','7:3'],[2019,'Michael van Gerwen','Michael Smith','7:3']];
+$('champs').innerHTML=CH.map(c=>`<tr><td>${c[0]}</td><td>${c[1]}</td><td>${c[2]}</td><td class="r">${c[3]}</td></tr>`).join('');
+
+/* ---------- Dartboard ---------- */
+const ORDER=[20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
+const P=(r,a)=>[(r*Math.sin(a)).toFixed(2),(-r*Math.cos(a)).toFixed(2)];
+const wedge=(r1,r2,a1,a2)=>{const[x1,y1]=P(r2,a1),[x2,y2]=P(r2,a2),[x3,y3]=P(r1,a2),[x4,y4]=P(r1,a1);return`M${x1} ${y1}A${r2} ${r2} 0 0 1 ${x2} ${y2}L${x3} ${y3}A${r1} ${r1} 0 0 0 ${x4} ${y4}Z`};
+const RINGS=[[16,99,1,'S'],[99,107,3,'T'],[107,162,1,'S'],[162,170,2,'D']];
+let svg=`<defs><radialGradient id="rim" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#2a2a2a"/><stop offset="1" stop-color="#050505"/></radialGradient><radialGradient id="shine" cx="35%" cy="25%" r="75%"><stop offset="0" stop-color="#fff" stop-opacity=".14"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>
+<circle r="226" fill="url(#rim)"/><circle r="226" fill="none" stroke="#3a3a3a" stroke-width="2"/>`;
+ORDER.forEach((n,i)=>{
+  const a1=(i*18-9)*Math.PI/180,a2=(i*18+9)*Math.PI/180,even=i%2===0;
+  for(const[r1,r2,m,t]of RINGS){
+    const col=m===1?(even?'#141414':'#efe3c4'):(even?'#e1262f':'#1d8a4b');
+    svg+=`<path class="seg" d="${wedge(r1,r2,a1,a2)}" fill="${col}" data-v="${n*m}" data-l="${t==='S'?n:t+n}" data-k="${t.toLowerCase()}"><title>${t==='S'?'Single '+n:(t==='D'?'Double ':'Treble ')+n}</title></path>`;
+  }
+  const[x,y]=P(196,i*18*Math.PI/180);
+  svg+=`<text x="${x}" y="${y}" fill="#efe3c4" font-family="Oswald,Impact,sans-serif" font-weight="700" font-size="24" text-anchor="middle" dominant-baseline="central" pointer-events="none">${n}</text>`;
+});
+svg+=`<circle class="seg" r="16" fill="#1d8a4b" data-v="25" data-l="25" data-k="s"><title>Single Bull 25</title></circle>
+<circle class="seg" r="6.4" fill="#e1262f" data-v="50" data-l="Bull" data-k="d"><title>Bullseye 50</title></circle>
+<g fill="none" stroke="#b9b9b9" stroke-opacity=".55" stroke-width=".9" pointer-events="none">${[6.4,16,99,107,162,170].map(r=>`<circle r="${r}"/>`).join('')}${ORDER.map((n,i)=>{const a=(i*18-9)*Math.PI/180,[x1,y1]=P(16,a),[x2,y2]=P(170,a);return`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`}).join('')}</g>
+<circle r="226" fill="url(#shine)" pointer-events="none"/><g id="marks" pointer-events="none"></g>`;
+$('board').innerHTML=svg;
+
+/* ---------- Scorer ---------- */
+const KEY='allyPallyScorer1';
+const fresh=(start=501,names=['Spieler 1','Spieler 2'])=>({start,names,rest:[start,start],legs:[0,0],cur:0,starter:0,visit:[],pts:[0,0],darts:[0,0],m180:[0,0],hiCo:[0,0],msg:''});
+let S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}
+if(!S||!Array.isArray(S.rest))S=fresh();
+const hist=[];
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const snap=()=>{hist.push(JSON.stringify(S));if(hist.length>300)hist.shift()};
+
+const endVisit=()=>{S.visit=[];S.cur=1-S.cur};
+const throwDart=(d,ev)=>{
+  snap();S.msg='';
+  const p=S.cur,before=S.rest[p]-S.visit.reduce((a,x)=>a+x.v,0),after=before-d.v;
+  S.visit.push(d);S.darts[p]++;
+  if(after<0||after===1||(after===0&&d.k!=='d')){
+    const lost=S.visit.reduce((a,x)=>a+x.v,0)-d.v;
+    S.darts[p]+=3-S.visit.length;
+    S.msg=`Bust! ${S.names[p]} bleibt auf ${S.rest[p]}.`;
+    endVisit();
+  }else if(after===0){
+    const sum=S.visit.reduce((a,x)=>a+x.v,0);
+    S.pts[p]+=sum;S.hiCo[p]=Math.max(S.hiCo[p],sum);S.legs[p]++;
+    S.msg=`Game shot! ${S.names[p]} checkt ${sum} aus.`;
+    S.starter=1-S.starter;S.rest=[S.start,S.start];S.visit=[];S.cur=S.starter;
+  }else if(S.visit.length===3){
+    const sum=S.visit.reduce((a,x)=>a+x.v,0);
+    S.pts[p]+=sum;S.rest[p]-=sum;if(sum===180){S.m180[p]++;S.msg='ONE HUNDRED AND EIGHTYYY!'}
+    endVisit();
+  }
+  if(ev)mark(ev);
+  render();
+};
+const mark=ev=>{
+  const pt=$('board').createSVGPoint();pt.x=ev.clientX;pt.y=ev.clientY;
+  const m=$('board').getScreenCTM();if(!m)return;const q=pt.matrixTransform(m.inverse());
+  const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  c.setAttribute('cx',q.x);c.setAttribute('cy',q.y);c.setAttribute('r',4);c.setAttribute('fill','#ffd54a');c.setAttribute('class','hit');
+  $('marks').appendChild(c);setTimeout(()=>c.remove(),400);
+};
+const quick=v=>{
+  v=Math.round(v);if(!(v>=0&&v<=180)||[179,178,176,175,173,172,169,166,163].includes(v)){S.msg='Diese Aufnahme ist mit drei Darts nicht möglich.';render();return}
+  if(S.visit.length){S.msg='Erst die angefangene Aufnahme beenden oder rückgängig machen.';render();return}
+  snap();const p=S.cur,after=S.rest[p]-v;S.darts[p]+=3;S.msg='';
+  if(after<0||after===1||(after===0&&!suggest(S.rest[p]))){S.msg=`Bust! ${S.names[p]} bleibt auf ${S.rest[p]}.`;S.cur=1-p}
+  else if(after===0){S.pts[p]+=v;S.hiCo[p]=Math.max(S.hiCo[p],v);S.legs[p]++;S.msg=`Game shot! ${S.names[p]} checkt ${v} aus.`;S.starter=1-S.starter;S.rest=[S.start,S.start];S.cur=S.starter}
+  else{S.pts[p]+=v;S.rest[p]=after;if(v===180){S.m180[p]++;S.msg='ONE HUNDRED AND EIGHTYYY!'}S.cur=1-p}
+  render();
+};
+
+const render=()=>{
+  const live=S.visit.reduce((a,x)=>a+x.v,0);
+  $('players').innerHTML=[0,1].map(p=>{
+    const rest=S.rest[p]-(p===S.cur?live:0),avg=S.darts[p]?(S.pts[p]/S.darts[p]*3).toFixed(1):'–';
+    return`<div class="pl ${p===S.cur?'on':''}"><span class="legs" title="Gewonnene Legs">${S.legs[p]}</span>
+      <input data-p="${p}" value="${esc(S.names[p])}" aria-label="Name Spieler ${p+1}" maxlength="24">
+      <div class="rest">${rest}</div>
+      <div class="stats"><span>Average<b>${avg}</b></span><span>180er<b>${S.m180[p]}</b></span><span>Top-Finish<b>${S.hiCo[p]||'–'}</b></span></div></div>`;
+  }).join('');
+  $('turn').textContent=`Am Board: ${S.names[S.cur]}`;
+  $('darts').innerHTML=[0,1,2].map(i=>`<span class="${S.visit[i]?'f':''}">${S.visit[i]?esc(S.visit[i].l):'Dart '+(i+1)}</span>`).join('');
+  $('visitsum').textContent=S.visit.length?`Aufnahme: ${live}`:'';
+  const rem=S.rest[S.cur]-live,sg=suggest(rem,3-S.visit.length);
+  $('sug').innerHTML=sg?`Finish-Weg: ${sg.map(d=>`<b>${d.l}</b>`).join('')}`:(rem<=170&&rem>1?'Kein Finish mit den restlichen Darts – gut stellen.':'');
+  $('msg').textContent=S.msg||'';
+  $('start').value=String(S.start);
+  save();
+};
+
+$('board').addEventListener('click',e=>{const t=e.target.closest('.seg');if(t)throwDart({v:+t.dataset.v,l:t.dataset.l,k:t.dataset.k},e)});
+$('miss').addEventListener('click',()=>throwDart({v:0,l:'0',k:'s'}));
+$('undo').addEventListener('click',()=>{if(hist.length){S=JSON.parse(hist.pop());S.msg='Letzte Eingabe zurückgenommen.';render()}});
+$('newleg').addEventListener('click',()=>{snap();S=fresh(S.start,S.names);S.msg='Neues Spiel – Game on!';render()});
+$('start').addEventListener('change',e=>{snap();S=fresh(+e.target.value,S.names);render()});
+$('players').addEventListener('change',e=>{const p=e.target.dataset.p;if(p!==undefined){S.names[+p]=e.target.value.trim()||`Spieler ${+p+1}`;render()}});
+$('quick').addEventListener('submit',e=>{e.preventDefault();const v=$('qv').value;if(v!==''){quick(+v);$('qv').value=''}});
+render();
+}
+</script>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="tippspiel.js"></script>
+<script src="news.js"></script>
+</body>
+</html>
