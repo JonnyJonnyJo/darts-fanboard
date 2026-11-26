@@ -375,3 +375,5 @@ nav.crumbs{position:static;z-index:auto;background:none;border:0;color:inherit;f
 @media(min-width:861px) and (max-width:1520px){nav .links a[href$="#geschichte"]{display:none}}
 @media(min-width:861px) and (max-width:1120px){nav .links a[href$="#turniere"]{display:none}}
 .pad .padact{font:700 12px/1.1 Barlow,system-ui,sans-serif;background:var(--deep)}
+.pad button{display:flex;align-items:center;justify-content:center;text-align:center;padding:2px 4px}
+.pad .padact{hyphens:none;word-break:normal}
