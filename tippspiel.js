@@ -30,7 +30,7 @@
   };
 
   let user = null, profile = null, questions = [], matches = [], board = [], myM = {}, myB = {}, busy = false;
-  let groups = [], groupsOk = true, view = '', viewBoard = null, invite = null, overview = [];
+  let remind = null, groups = [], groupsOk = true, view = '', viewBoard = null, invite = null, overview = [];
   const TAB_KEYS = ['tipp','uebersicht','tabelle','bonus','runden','regeln'];
   let tab = TAB_KEYS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'tipp', tipDay = null, ovDay = null;
   const INVITE_URL = c => `${location.origin}/darts-tippspiel/?runde=${c}`;
@@ -75,6 +75,7 @@
       sb.from('bonus_tips').select('*').eq('user_id', user.id)
     ]);
     profile = p.data || null;
+    try { const rp = await sb.from('reminder_prefs').select('enabled').eq('user_id', user.id).maybeSingle(); remind = rp.data ? rp.data.enabled : false; } catch (e) { remind = null; }
     (mt.data || []).forEach(t => myM[t.match_id] = { sets1: t.sets1, sets2: t.sets2 });
     (bt.data || []).forEach(t => myB[t.question_id] = t.value);
     if (profile) {
@@ -135,7 +136,9 @@
       a.innerHTML = `<div class="kt-me"><div class="kt-who"><span class="note">Angemeldet als</span><b>${esc(profile.display_name)}</b></div>
         ${me ? `<div class="kt-stat"><b>${me.rank}.</b><span>Platz</span></div><div class="kt-stat"><b>${me.points}</b><span>Punkte</span></div>` : ''}
         ${open.length ? `<div class="kt-stat${missing ? ' warn' : ''}"><b>${missing}</b><span>ohne Tipp</span></div>` : ''}
-        <button class="tbtn" id="tOut" type="button">${LIVE ? 'Abmelden' : 'Name ändern'}</button></div>`;
+        ${me ? '<button class="tbtn" id="tShareImg" type="button">📸 Platz teilen</button>' : ''}
+        <button class="tbtn" id="tOut" type="button">${LIVE ? 'Abmelden' : 'Name ändern'}</button></div>
+        ${LIVE && user && remind !== null ? `<label class="kt-remind"><input type="checkbox" id="tRemind"${remind ? ' checked' : ''}> E-Mail-Erinnerung am Morgen jedes WM-Spieltags, falls noch Tipps fehlen</label>` : ''}`;
     }
     const box = $('tRundeBox');
     if (box) {
@@ -263,6 +266,37 @@
     catch (e) { prompt('Diesen Link teilen:', url); }
   }
 
+  async function shareImage() {
+    const me = (view && viewBoard ? viewBoard : board).find(r => r.display_name === myName()); if (!me) return;
+    const total = (view && viewBoard ? viewBoard : board).length, league = viewName();
+    const c = document.createElement('canvas'); c.width = 1080; c.height = 1350; const x = c.getContext('2d');
+    const g = x.createLinearGradient(0, 0, 0, 1350); g.addColorStop(0, '#0b4426'); g.addColorStop(1, '#06301b'); x.fillStyle = g; x.fillRect(0, 0, 1080, 1350);
+    [[540, 470, 360, '#0b4426'], [540, 470, 300, '#efe3c4'], [540, 470, 230, '#0b4426'], [540, 470, 170, '#efe3c4']].forEach(([cx, cy, r, f]) => { x.globalAlpha = .12; x.fillStyle = f; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill(); });
+    x.globalAlpha = 1; x.textAlign = 'center'; const F = 'Oswald, Impact, Arial Narrow, sans-serif';
+    x.fillStyle = '#f3c63f'; x.font = `700 46px ${F}`; x.fillText('MEIN PLATZ IM DARTS-WM TIPPSPIEL', 540, 130);
+    x.fillStyle = '#ffffff'; x.font = `600 40px ${F}`; x.fillText(league.length > 34 ? league.slice(0, 33) + '…' : league, 540, 200);
+    x.fillStyle = '#ffffff'; x.font = `700 300px ${F}`; x.fillText(me.rank + '.', 540, 570);
+    x.fillStyle = '#efe3c4'; x.font = `500 44px ${F}`; x.fillText(`von ${total} Tippern`, 540, 650);
+    x.fillStyle = '#e1262f'; x.beginPath(); x.roundRect ? x.roundRect(300, 720, 480, 130, 65) : x.rect(300, 720, 480, 130); x.fill();
+    x.fillStyle = '#fff'; x.font = `700 76px ${F}`; x.fillText(`${me.points} Punkte`, 540, 812);
+    x.fillStyle = '#ffffff'; x.font = `600 52px ${F}`; x.fillText(me.display_name, 540, 960);
+    x.fillStyle = '#efe3c4'; x.font = `400 36px ${F}`; x.fillText(`${me.exact_hits} exakte Treffer · ${me.bonus_points} Bonuspunkte`, 540, 1020);
+    x.fillStyle = '#f3c63f'; x.font = `700 44px ${F}`; x.fillText('Tipp mit: dartsaktuell.com/darts-tippspiel', 540, 1220);
+    x.fillStyle = 'rgba(255,255,255,.6)'; x.font = `400 26px ${F}`; x.fillText('Darts-WM 2026/27 · inoffizielle Fanseite', 540, 1280);
+    const blob = await new Promise(r => c.toBlob(r, 'image/png')); if (!blob) return;
+    const file = new File([blob], 'mein-platz-darts-tippspiel.png', { type: 'image/png' });
+    const text = `Ich bin ${me.rank}. von ${total} im Darts-WM Tippspiel (${league}) – tipp mit:`, url = location.origin + '/darts-tippspiel/';
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], text: `${text} ${url}` }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    say('Bild gespeichert – jetzt z. B. in WhatsApp oder Instagram teilen.');
+  }
+  async function saveRemind(on) {
+    const lang = 'de';
+    const { error } = await sb.from('reminder_prefs').upsert({ user_id: user.id, enabled: on, lang }, { onConflict: 'user_id' });
+    if (error) { say('Speichern fehlgeschlagen: ' + error.message, true); return; }
+    remind = on; say(on ? 'Erinnerung an: Du bekommst an WM-Spieltagen morgens eine Mail, wenn Tipps fehlen.' : 'Erinnerung aus.');
+  }
+
   async function saveBonus() {
     if (busy) return; busy = true; say('Speichere …');
     const rows = questions.filter(q => isOpen(q.locks_at)).map(q => ({ q, v: (($('bq' + q.id) || {}).value || '').trim() })).filter(x => x.v !== '');
@@ -347,6 +381,7 @@
     const d = t.dataset || {};
     if (t.id === 'tOut') { if (LIVE) await sb.auth.signOut(); else { const s = store.get(); delete s.name; store.set(s); } await refresh(); return; }
     if (t.id === 'tBonusSave') return saveBonus();
+    if (t.id === 'tShareImg') return shareImage();
     if (t.id === 'ktSave') return saveTips();
     if (d.tab) { tab = d.tab; renderTabs(); renderPanel(); if (t.classList.contains('tbtn')) $('ktTabs').scrollIntoView({ block: 'nearest' }); return; }
     if (d.tday) { await saveTips(null, true); tipDay = d.tday; renderPanel(); return; }
@@ -364,6 +399,7 @@
     }
   });
   document.addEventListener('change', async e => {
+    if (e.target.id === 'tRemind' && LIVE && user) { await saveRemind(e.target.checked); return; }
     if (e.target.id === 'tRunde') { setView(e.target.value); await loadView(); render(); return; }
     const m = e.target.dataset && e.target.dataset.m;
     if (m) { // automatisch speichern, sobald beide Felder eines Spiels ausgefüllt sind

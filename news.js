@@ -36,7 +36,7 @@
     if (error || !data || !data.length) return;
     const money = k => '£' + Math.round(Number(k) * 1000).toLocaleString('de-DE');
     const row = r => { const mv = r.prev_rank ? r.prev_rank - r.rank : 0;
-      return `<tr${r.country === 'de' ? ' class="de"' : ''}><td class="r"><b>${r.rank}</b></td><td class="mv">${mv > 0 ? `<span class="up">▲${mv}</span>` : mv < 0 ? `<span class="down">▼${-mv}</span>` : ''}</td><td>${esc(r.player)}${r.country === 'de' ? ' <span class="flag" title="Deutschland">DE</span>' : ''}</td><td class="r">${money(r.prize_k)}</td></tr>`; };
+      return `<tr${r.country === 'de' ? ' class="de"' : ''}><td class="r"><b>${r.rank}</b></td><td class="mv">${mv > 0 ? `<span class="up">▲${mv}</span>` : mv < 0 ? `<span class="down">▼${-mv}</span>` : ''}</td><td><a class="pl-link" href="/spieler/${slugify(r.player)}/">${esc(r.player)}</a>${r.country === 'de' ? ' <span class="flag" title="Deutschland">DE</span>' : ''}</td><td class="r">${money(r.prize_k)}</td></tr>`; };
     (all || top).innerHTML = data.map(row).join('');
   }
   function renderNews() {
