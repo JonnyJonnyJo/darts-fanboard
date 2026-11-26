@@ -31,7 +31,8 @@
 
   let user = null, profile = null, questions = [], matches = [], board = [], myM = {}, myB = {}, busy = false;
   let groups = [], groupsOk = true, view = '', viewBoard = null, invite = null, overview = [];
-  let tab = 'tipp', tipDay = null, ovDay = null;
+  const TAB_KEYS = ['tipp','uebersicht','tabelle','bonus','runden','regeln'];
+  let tab = TAB_KEYS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'tipp', tipDay = null, ovDay = null;
   const INVITE_URL = c => `${location.origin}/darts-tippspiel/?runde=${c}`;
   const pend = { get(){ try { return localStorage.getItem('tippRunde') || ''; } catch(e){ return ''; } }, set(v){ try { v ? localStorage.setItem('tippRunde', v) : localStorage.removeItem('tippRunde'); } catch(e){} } };
   { const c = new URLSearchParams(location.search).get('runde'); if (c && /^[A-Za-z2-9]{8}$/.test(c)) pend.set(c.toUpperCase()); }
@@ -374,6 +375,7 @@
 
   /* ---------- Start ---------- */
   if (authError) say(/expired|invalid/i.test(authError.get('error_code') || authError.get('error_description') || '') ? 'Der Login-Link ist abgelaufen oder wurde schon benutzt. Bitte fordere oben einen neuen an.' : 'Anmeldung fehlgeschlagen: ' + (authError.get('error_description') || 'unbekannter Fehler'), true);
+  if (TAB_KEYS.includes(location.hash.slice(1))) setTimeout(() => { const s = $('ktTabs'); if (s) s.scrollIntoView({ block: 'start' }); }, 600);
   if (cameFromLink || authError) setTimeout(() => { const s = $('tAccount'); if (s) s.scrollIntoView({ block: 'center' }); }, 1200);
   if (LIVE) {
     sb.auth.onAuthStateChange((_ev, session) => { const u = session?.user || null; if ((u && u.id) !== (user && user.id)) { user = u; refresh(); } });

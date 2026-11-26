@@ -314,3 +314,16 @@ nav.crumbs{position:static;z-index:auto;background:none;border:0;color:inherit;f
   .kt-p1,.kt-p2{font-size:14px}
   .kt-tab{padding:10px 11px;font-size:14px}
 }
+
+/* Teilen-Leiste & Tipprunden-Kasten */
+.share{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:16px 0 0}
+.share-l{font-weight:700;margin-right:2px;opacity:.85}
+.sh{display:inline-flex;align-items:center;min-height:38px;padding:0 14px;border-radius:999px;font:600 14px Barlow,system-ui,sans-serif;text-decoration:none;color:#fff;border:0;cursor:pointer}
+.sh-wa{background:#1fa855}.sh-x{background:#111}.sh-fb{background:#1877f2}.sh-tg{background:#229ed9}.sh-more{background:rgba(255,255,255,.16);color:inherit;border:1px solid currentColor}
+.band:not(.hero) .sh-more{color:var(--ink)}
+.promo{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 20px;background:light-dark(#fff6d6,#3a3418);border:2px solid var(--gold);border-radius:16px;padding:16px 20px;margin:22px 0 0}
+.promo,.promo b{color:light-dark(#1b2b22,#f3efe2)}
+.promo b{display:block;font-size:18px;margin-bottom:4px}
+.promo span{color:light-dark(#4b5b52,#c9d6cd)}
+.promo .btn-r{flex:none;display:inline-flex;align-items:center;min-height:46px;padding:0 22px;border-radius:999px;background:var(--red);color:#fff;text-decoration:none;font-weight:700}
+.promo-band{padding-top:0;padding-bottom:0}
