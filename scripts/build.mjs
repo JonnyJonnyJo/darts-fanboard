@@ -17,6 +17,10 @@ const ALT = {};
 for (const de of Object.keys(PATHS.en)) ALT[de] = { de, en: PATHS.en[de], nl: PATHS.nl[de] };
 const altLinks = de => ALT[de] ? ['de', 'en', 'nl'].map(l => `<link rel="alternate" hreflang="${l}" href="https://dartsaktuell.com${ALT[de][l]}">`).join('\n') + `\n<link rel="alternate" hreflang="x-default" href="https://dartsaktuell.com${de}">` : '';
 const langSwitch = (de, cur) => ['de', 'en', 'nl'].map(l => { const u = (ALT[de] || ALT['/'])[l]; return l === cur ? `<b aria-current="true">${l.toUpperCase()}</b>` : `<a href="${u}" hreflang="${l}" lang="${l}">${l.toUpperCase()}</a>`; }).join('');
+const CO_BASE = { de: '/checkout-rechner/', en: '/en/darts-checkout-chart/', nl: '/nl/darts-uitgooi-tabel/' };
+const PL_BASE = { de: '/spieler/', en: '/en/players/', nl: '/nl/spelers/' };
+for (let v = 2; v <= 170; v++) ALT[`${CO_BASE.de}${v}/`] = { de: `${CO_BASE.de}${v}/`, en: `${CO_BASE.en}${v}/`, nl: `${CO_BASE.nl}${v}/` };
+const PAGERS = {};
 const rd = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const safeUrl = u => /^https?:\/\//i.test(String(u || '')) ? String(u) : '';
@@ -68,7 +72,7 @@ try {
 }
 const money = k => '£' + Math.round(Number(k) * 1000).toLocaleString('de-DE');
 const oomRow = (r, i) => { const mv = r.prev_rank ? r.prev_rank - r.rank : 0;
-  return `<tr${r.country === 'de' ? ' class="de"' : ''}><td class="r"><b>${r.rank}</b></td><td class="mv">${mv > 0 ? `<span class="up">▲${mv}</span>` : mv < 0 ? `<span class="down">▼${-mv}</span>` : ''}</td><td>${esc(r.player)}${r.country === 'de' ? ' <span class="flag" title="Deutschland">DE</span>' : ''}</td><td class="r">${money(r.prize_k)}</td></tr>`; };
+  return `<tr${r.country === 'de' ? ' class="de"' : ''}><td class="r"><b>${r.rank}</b></td><td class="mv">${mv > 0 ? `<span class="up">▲${mv}</span>` : mv < 0 ? `<span class="down">▼${-mv}</span>` : ''}</td><td><a class="pl-link" href="/spieler/${slugify(r.player)}/">${esc(r.player)}</a>${r.country === 'de' ? ' <span class="flag" title="Deutschland">DE</span>' : ''}</td><td class="r">${money(r.prize_k)}</td></tr>`; };
 const oomStand = oomMeta ? `Stand: ${fmtDateLong(oomMeta.as_of)}${oomMeta.note ? ' (' + esc(oomMeta.note) + ')' : ''}` : '';
 function fmtDateLong(d) { return new Date(d + 'T12:00:00Z').toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Berlin' }); }
 
@@ -125,10 +129,12 @@ const SCRIPTS = {
   app: '<script src="/app.js"></script>',
   db: '<script src="/config.js"></script>\n<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>',
   tipp: '<script src="/tippspiel.js"></script>',
-  news: '<script src="/news.js"></script>'
+  news: '<script src="/news.js"></script>',
+  live: '<script src="/live.js"></script>'
 };
-const page = (meta, body, scripts = []) => `${headFor(meta)}${nav.replace('<!--LANGSW-->', langSwitch(meta.url, 'de'))}\n${body}\n${footer}\n${scripts.map(s => SCRIPTS[s]).join('\n')}\n</body>\n</html>\n`;
+const pageFn = (meta, body, scripts = []) => `${headFor(meta)}${nav.replace('<!--LANGSW-->', langSwitch(meta.url, 'de'))}\n${body}\n${footer}\n${scripts.map(s => SCRIPTS[s]).join('\n')}\n</body>\n</html>\n`;
 
+const page = pageFn;
 /* ---------- News-HTML ---------- */
 const fmtDate = d => new Date(d + 'T12:00:00Z').toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric', timeZone: TZ });
 // Artikeltext: Absätze durch Leerzeilen, "## " = Zwischenüberschrift, "- " = Aufzählung, [Text](https://…) = Link, **fett**
@@ -149,7 +155,7 @@ const cardHtml = (n, h = 'h3') => `<article class="ncard">${meta(n)}<${h}><a hre
 /* ---------- Ausgabe ---------- */
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.mkdirSync(OUT, { recursive: true });
-for (const f of ['admin.html', 'impressum.html', 'datenschutz.html', 'teilnahmebedingungen.html', 'config.js', 'tippspiel.js', 'news.js', 'app.js', 'style.css', 'CNAME', 'manifest.webmanifest'])
+for (const f of ['admin.html', 'impressum.html', 'datenschutz.html', 'teilnahmebedingungen.html', 'config.js', 'tippspiel.js', 'news.js', 'app.js', 'live.js', 'style.css', 'CNAME', 'manifest.webmanifest'])
   if (fs.existsSync(path.join(ROOT, f))) fs.copyFileSync(path.join(ROOT, f), path.join(OUT, f));
 fs.cpSync(path.join(ROOT, 'data'), path.join(OUT, 'data'), { recursive: true });
 if (fs.existsSync(path.join(ROOT, 'img'))) fs.cpSync(path.join(ROOT, 'img'), path.join(OUT, 'img'), { recursive: true });
@@ -190,7 +196,7 @@ try {
 // Cache-Busting: geänderte Dateien bekommen eine neue Versionsnummer, damit Browser sofort die neue Fassung laden
 const crypto = await import('node:crypto');
 const VER = {};
-for (const f of ['style.css', 'app.js', 'news.js', 'tippspiel.js', 'config.js']) {
+for (const f of ['style.css', 'app.js', 'news.js', 'tippspiel.js', 'live.js', 'config.js']) {
   const p = path.join(ROOT, f);
   if (fs.existsSync(p)) VER[f] = crypto.createHash('sha1').update(fs.readFileSync(p)).digest('hex').slice(0, 8);
 }
@@ -301,7 +307,7 @@ const kind = l => l.startsWith('D') || l === 'Bull' ? 'dbl' : l.startsWith('T') 
 const rows = [];
 for (let v = 170; v >= 2; v--) {
   const r = suggest(v);
-  rows.push(`<tr id="finish-${v}"><td><b>${v}</b></td><td>${r ? r.map(d => `<span class="${kind(d.l)}">${d.l}</span>`).join(' ') : 'kein Finish'}</td><td>${r ? r.length : '–'}</td></tr>`);
+  rows.push(`<tr id="finish-${v}"><td><b><a href="/checkout-rechner/${v}/">${v}</a></b></td><td>${r ? r.map(d => `<span class="${kind(d.l)}">${d.l}</span>`).join(' ') : 'kein Finish'}</td><td>${r ? r.length : '–'}</td></tr>`);
 }
 const bogeys = [169, 168, 166, 165, 163, 162, 159].filter(v => !suggest(v));
 write('checkout-rechner/index.html', page(
@@ -361,7 +367,7 @@ for (const L of Object.values(LANGS)) {
   const tBase = tHead.replace(/<title>[\s\S]*?<\/title>\n?/, '').replace(/<meta name="description"[^>]*>\n?/, '').replace(/<link rel="canonical"[^>]*>\n?/, '')
     .replace(/<meta property="og:(title|description|url|type)"[^>]*>\n?/g, '').replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>\n?/, '');
   const RTS = `<script>window.DARTS_RT=${JSON.stringify(L.rt)};window.DARTS_LANG='${C}';</script>`;
-  const tScripts = { app: `<script src="/${C}/app.js"></script>`, db: SCRIPTS.db, tipp: `<script src="/${C}/tippspiel.js"></script>`, news: `<script src="/${C}/news.js"></script>` };
+  const tScripts = { app: `<script src="/${C}/app.js"></script>`, db: SCRIPTS.db, tipp: `<script src="/${C}/tippspiel.js"></script>`, news: `<script src="/${C}/news.js"></script>`, live: SCRIPTS.live };
   const tHeadFor = ({ title, desc, url, de, type = 'website', ld }) => tBase.replace('<meta charset="utf-8">', `<meta charset="utf-8">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}">
@@ -382,7 +388,8 @@ for (const L of Object.values(LANGS)) {
   const tSrc = n => { const u = safeUrl(n.url); return u ? `<span class="src">${T.source} <a href="${esc(u)}" rel="noopener" target="_blank">${esc(n.source || 'Link')}</a></span>` : ''; };
   const tLead = n => `${tMeta(n)}<h2><a href="${n.path}">${esc(n.title)}</a></h2><p>${esc(n.teaser)}</p>${tSrc(n)}`;
   const tCard = (n, h = 'h3') => `<article class="ncard">${tMeta(n)}<${h}><a href="${n.path}">${esc(n.title)}</a></${h}><p>${esc(n.teaser)}</p>${tSrc(n)}</article>`;
-  const tOomRow = r => oomRow(r).replace('title="Deutschland">DE<', `title="${T.germany}">${C === 'en' ? 'GER' : 'DU'}<`);
+  const tOomRow = r => oomRow(r).replace('title="Deutschland">DE<', `title="${T.germany}">${C === 'en' ? 'GER' : 'DU'}<`).replace('href="/spieler/', `href="${PL_BASE[C]}`);
+  PAGERS[C] = { page: tPage, intro: tIntro, crumbs: tCrumbNav, promo: tPromo, home, T, L, news, dLong };
   const tMoney = k => '£' + Math.round(Number(k) * 1000).toLocaleString(L.locale);
   const tStand = oomMeta ? `${T.asOf}: ${dLong(oomMeta.as_of)}` : '';
   const out = (rel, html) => { write(`${C}/${rel}`, html); };
@@ -459,7 +466,7 @@ ${tPromo}
   // Checkout
   const Co = P.checkout, coUrl = MAP['/checkout-rechner/'];
   const coRows = [];
-  for (let v = 170; v >= 2; v--) { const r = suggest(v); coRows.push(`<tr id="finish-${v}"><td><b>${v}</b></td><td>${r ? r.map(d => `<span class="${kind(d.l)}">${d.l}</span>`).join(' ') : T.noCheckout}</td><td>${r ? r.length : '–'}</td></tr>`); }
+  for (let v = 170; v >= 2; v--) { const r = suggest(v); coRows.push(`<tr id="finish-${v}"><td><b><a href="${CO_BASE[C]}${v}/">${v}</a></b></td><td>${r ? r.map(d => `<span class="${kind(d.l)}">${d.l}</span>`).join(' ') : T.noCheckout}</td><td>${r ? r.length : '–'}</td></tr>`); }
   out(`${coUrl.slice(4)}index.html`, tPage({ title: Co.title, desc: Co.desc, url: coUrl, de: '/checkout-rechner/', ld: [crumbs([['Darts aktuell', home], [Co.crumb, coUrl]]),
     { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: [
       { '@type': 'Question', name: Co.faq[0][0], acceptedAnswer: { '@type': 'Answer', text: Co.faq[0][1] } },
@@ -486,6 +493,145 @@ ${tPromo}
   pages.push({ url: oUrl, pri: '0.8', freq: 'daily' });
   console.log(`${C}: ${news.length} News, ${pages.filter(p => p.url.startsWith('/' + C + '/')).length} Seiten`);
 }
+/* ---------- Zusatzseiten: Finish-Seiten 170–2, Spielerseiten, Liveticker (DE/EN/NL) ---------- */
+PAGERS.de = { page: pageFn, intro, crumbs: crumbNav, promo: tippPromo, home: '/', T: { home: 'Startseite' }, L: { code: 'de', locale: 'de-DE', tz: TZ, rt: {} }, news: data.news.map(n => ({ ...n, slug: n.slug })), dLong: fmtDateLong };
+const co = new Function(coSrc + '; return { TH, FIN, suggest };')();
+const routeCost = d => d.reduce((a, x, i) => a + (i === d.length - 1 ? (x.r ?? x.c) : x.c), 0);
+const lbl = d => d.map(x => x.l).join(' ');
+function alternatives(v) {
+  const best = co.suggest(v), out = [], seen = new Set(best ? [lbl(best)] : []);
+  const add = d => { const k = lbl(d); if (!seen.has(k)) { seen.add(k); out.push({ d, c: routeCost(d) }); } };
+  for (const f of co.FIN) if (f.v === v) add([f]);
+  for (const a of co.TH) for (const f of co.FIN) if (a.v + f.v === v) add([a, f]);
+  if (out.length < 6) for (const a of co.TH) for (const b of co.TH) { if (a.v < b.v) continue; const rest = v - a.v - b.v; if (rest < 2) continue; for (const f of co.FIN) if (f.v === rest) add([a, b, f]); }
+  return out.sort((x, y) => x.d.length - y.d.length || x.c - y.c).slice(0, 3).map(x => x.d);
+}
+function setupFor(v) { // Bogey/kein Finish: womit stellt man sich ein gutes Doppel?
+  const PREF = [40, 32, 36, 24, 16, 20, 8, 50];
+  let best = null;
+  for (const d of co.TH) { const left = v - d.v; const p = PREF.indexOf(left); if (p < 0) continue; const score = p * 3 + d.c; if (!best || score < best.s) best = { d: [d], left, s: score }; }
+  if (!best) for (const a of co.TH) for (const b of co.TH) { if (a.v < b.v) continue; const left = v - a.v - b.v; const p = PREF.indexOf(left); if (p < 0) continue; const score = p * 3 + a.c + b.c; if (!best || score < best.s) best = { d: [a, b], left, s: score }; }
+  if (!best) for (const a of co.TH) for (const b of co.TH) for (const c of co.TH) { if (a.v < b.v || b.v < c.v) continue; const left = v - a.v - b.v - c.v; const p = PREF.indexOf(left); if (p < 0) continue; const score = p * 3 + a.c + b.c + c.c; if (!best || score < best.s) best = { d: [a, b, c], left, s: score }; }
+  return best;
+}
+const chips = d => d.map(x => `<span class="${kind(x.l)}">${x.l}</span>`).join(' ');
+const XT = {
+  de: { coTitle: (v, r) => r ? `${v} checken: ${lbl(r)} – bester Checkout-Weg | Darts aktuell` : `${v} Rest im Darts: kein Checkout möglich | Darts aktuell`,
+        coDesc: (v, r) => r ? `So checkst du ${v} Rest im Darts: ${lbl(r)} (${r.length} ${r.length === 1 ? 'Dart' : 'Darts'}). Mit Alternativen und Plan B, wenn der erste Dart danebengeht.` : `${v} lässt sich mit drei Darts nicht auf einem Doppel beenden. So stellst du dir stattdessen ein gutes Finish.`,
+        coH1: v => `${v} <span>checken</span>`, coLead: (v, r) => r ? `Der beste Weg für <b>${v} Rest</b>: ${chips(r)} – ${r.length} ${r.length === 1 ? 'Dart' : 'Darts'} bis zum Leg.` : `<b>${v}</b> ist eine Bogey-Number: Mit drei Darts lässt sich diese Zahl nicht auf einem Doppel beenden.`,
+        crumb: 'Checkout-Rechner', best: 'Der empfohlene Weg', why: 'Der Weg nutzt möglichst wenige Darts, die Doppel, die Profis am liebsten spielen, und lässt nach einem Fehlwurf möglichst noch ein Finish übrig.',
+        alts: 'Alternativen', planB: 'Wenn der erste Dart danebengeht', planBtxt: (f, n, left, r2) => `Landet ${f} nur in der einfachen ${n}, bleiben <b>${left}</b> Rest. ${r2 ? `Dann geht es mit ${chips(r2)} weiter.` : 'Mit zwei Darts ist das kein Finish mehr – stell dir mit dem zweiten Dart ein gutes Doppel.'}`,
+        setup: 'So stellst du dir ein Finish', setupTxt: (s) => `Wirf ${chips(s.d)} und lass dir <b>${s.left}</b> stehen – das checkst du in der nächsten Aufnahme mit ${chips(co.suggest(s.left, 3))}.`,
+        near: 'Weitere Restzahlen', calc: 'Zum Checkout-Rechner', faqQ: v => `Wie checkt man ${v} im Darts?`, faqA: (v, r) => r ? `Der beste Weg für ${v} ist ${lbl(r)}.` : `${v} kann man mit drei Darts nicht checken (Bogey-Number).`,
+        plTitle: n => `${n}: Weltrangliste, Preisgeld & Darts-WM 2027 | Darts aktuell`, plDesc: (n, r) => r ? `${n} ist die Nummer ${r.rank} der PDC Order of Merit (${money(r.prize_k)}). Alle WM-Spiele, Gegner, Uhrzeiten und Ergebnisse bei der Darts-WM 2026/27.` : `${n} bei der Darts-WM 2026/27: Gegner, Uhrzeiten und Ergebnisse.`,
+        plLead: (n, r) => r ? `${n} steht auf <b>Platz ${r.rank}</b> der PDC-Weltrangliste mit ${money(r.prize_k)} Preisgeld aus den letzten zwei Jahren.` : `${n} ist bei der Darts-WM 2026/27 dabei.`, plCrumb: 'Spieler', mv: (m) => m > 0 ? ` Seit dem letzten Stand ${m} ${m === 1 ? 'Platz' : 'Plätze'} nach oben.` : m < 0 ? ` Seit dem letzten Stand ${-m} ${-m === 1 ? 'Platz' : 'Plätze'} nach unten.` : '',
+        wm: 'Bei der Darts-WM 2026/27', wmNone: 'Die WM-Paarungen stehen nach der Auslosung am Montag, 30. November, fest. Dann erscheinen hier Gegner, Termin und Uhrzeit.', next: 'Nächstes Spiel', out: r => `Ausgeschieden in der ${r}.`, th: ['Datum', 'Zeit', 'Runde', 'Gegner', 'Ergebnis'], vs: 'gegen', story: 'Mehr zu', neigh: 'In der Weltrangliste daneben', toOom: 'Komplette Weltrangliste', toTipp: 'Tipp seine Spiele im Tippspiel', pro: 'Darts-Profi',
+        ltTitle: 'Darts-WM Liveticker 2026/27: Live-Ergebnisse & Spielstände | Darts aktuell', ltDesc: 'Darts-WM 2026/27 im Liveticker: alle Spiele des Tages mit Zwischenständen nach Sätzen und Legs, Ergebnissen und Uhrzeiten – aktualisiert sich von selbst.', ltH1: 'Darts-WM <span>Liveticker</span>', ltIntro: 'Alle Spiele des Tages mit Zwischenstand nach Sätzen und Legs. Die Seite lädt alle 30 Sekunden neu – einfach offen lassen.', ltCrumb: 'Liveticker', ltShare: 'Darts-WM Liveticker: alle Spielstände live 🎯' },
+  en: { coTitle: (v, r) => r ? `${v} checkout in darts: ${lbl(r)} – best way out | Darts aktuell` : `${v} in darts: no checkout possible | Darts aktuell`,
+        coDesc: (v, r) => r ? `How to check out ${v} in darts: ${lbl(r)} (${r.length} ${r.length === 1 ? 'dart' : 'darts'}). With alternatives and a plan B if the first dart misses.` : `${v} cannot be finished on a double with three darts. Here is how to set up a finish instead.`,
+        coH1: v => `${v} <span>checkout</span>`, coLead: (v, r) => r ? `The best way to check out <b>${v}</b>: ${chips(r)} – ${r.length} ${r.length === 1 ? 'dart' : 'darts'} to win the leg.` : `<b>${v}</b> is a bogey number: it cannot be finished on a double with three darts.`,
+        crumb: 'Checkout chart', best: 'Recommended route', why: 'The route uses as few darts as possible, the doubles the pros prefer, and where possible still leaves a finish after a miss.',
+        alts: 'Alternatives', planB: 'If the first dart misses', planBtxt: (f, n, left, r2) => `If ${f} only finds the single ${n}, you are left on <b>${left}</b>. ${r2 ? `Then go ${chips(r2)}.` : 'That is no longer a two-dart finish – use your second dart to leave a good double.'}`,
+        setup: 'How to set up a finish', setupTxt: (s) => `Throw ${chips(s.d)} and leave yourself <b>${s.left}</b> – next visit you check it out with ${chips(co.suggest(s.left, 3))}.`,
+        near: 'Other scores', calc: 'Checkout calculator', faqQ: v => `How do you check out ${v} in darts?`, faqA: (v, r) => r ? `The best way to check out ${v} is ${lbl(r)}.` : `${v} cannot be checked out with three darts (bogey number).`,
+        plTitle: n => `${n}: Order of Merit, prize money & World Darts Championship 2027 | Darts aktuell`, plDesc: (n, r) => r ? `${n} is number ${r.rank} on the PDC Order of Merit (${tm('en', r.prize_k)}). Every World Championship match, opponent, start time and result at the 2026/27 World Darts Championship.` : `${n} at the 2026/27 World Darts Championship: opponents, start times and results.`,
+        plLead: (n, r) => r ? `${n} is <b>number ${r.rank}</b> on the PDC Order of Merit with ${tm('en', r.prize_k)} in prize money from the last two years.` : `${n} is in the field for the 2026/27 World Darts Championship.`, plCrumb: 'Players', mv: m => m > 0 ? ` Up ${m} ${m === 1 ? 'place' : 'places'} since the last update.` : m < 0 ? ` Down ${-m} ${-m === 1 ? 'place' : 'places'} since the last update.` : '',
+        wm: 'At the 2026/27 World Darts Championship', wmNone: 'The match-ups are decided at the draw on Monday 30 November. Opponent, date and start time will appear here afterwards.', next: 'Next match', out: r => `Knocked out in ${r.toLowerCase()}.`, th: ['Date', 'Time (UK)', 'Round', 'Opponent', 'Result'], vs: 'vs', story: 'More on', neigh: 'Next to him in the rankings', toOom: 'Full Order of Merit', toTipp: 'Predict his matches', pro: 'Professional darts player',
+        ltTitle: 'World Darts Championship live scores 2026/27 | Darts aktuell', ltDesc: 'World Darts Championship 2026/27 live: every match of the day with live set and leg scores, results and UK start times – updates automatically.', ltH1: 'World Championship <span>live scores</span>', ltIntro: 'Every match of the day with the live score in sets and legs. The page reloads every 30 seconds – just leave it open.', ltCrumb: 'Live scores', ltShare: 'World Darts Championship live scores 🎯' },
+  nl: { coTitle: (v, r) => r ? `${v} uitgooien: ${lbl(r)} – beste route | Darts aktuell` : `${v} in darts: geen finish mogelijk | Darts aktuell`,
+        coDesc: (v, r) => r ? `Zo gooi je ${v} uit in darts: ${lbl(r)} (${r.length} ${r.length === 1 ? 'pijl' : 'pijlen'}). Met alternatieven en een plan B als de eerste pijl mist.` : `${v} kun je met drie pijlen niet op een dubbel uitgooien. Zo zet je in plaats daarvan een goede finish klaar.`,
+        coH1: v => `${v} <span>uitgooien</span>`, coLead: (v, r) => r ? `De beste route voor <b>${v}</b>: ${chips(r)} – ${r.length} ${r.length === 1 ? 'pijl' : 'pijlen'} tot de leg-winst.` : `<b>${v}</b> is een bogey number: deze score kun je met drie pijlen niet op een dubbel uitgooien.`,
+        crumb: 'Uitgooi-tabel', best: 'Aanbevolen route', why: 'De route gebruikt zo weinig mogelijk pijlen, de dubbels die profs het liefst gooien en laat na een misser zo mogelijk nog een finish over.',
+        alts: 'Alternatieven', planB: 'Als de eerste pijl mist', planBtxt: (f, n, left, r2) => `Komt ${f} alleen in de enkele ${n}, dan blijft er <b>${left}</b> over. ${r2 ? `Ga dan verder met ${chips(r2)}.` : 'Met twee pijlen is dat geen finish meer – zet met je tweede pijl een goede dubbel klaar.'}`,
+        setup: 'Zo zet je een finish klaar', setupTxt: (s) => `Gooi ${chips(s.d)} en laat <b>${s.left}</b> staan – die gooi je de volgende beurt uit met ${chips(co.suggest(s.left, 3))}.`,
+        near: 'Andere scores', calc: 'Uitgooi-calculator', faqQ: v => `Hoe gooi je ${v} uit in darts?`, faqA: (v, r) => r ? `De beste route voor ${v} is ${lbl(r)}.` : `${v} kun je met drie pijlen niet uitgooien (bogey number).`,
+        plTitle: n => `${n}: wereldranglijst, prijzengeld & WK darts 2027 | Darts aktuell`, plDesc: (n, r) => r ? `${n} is de nummer ${r.rank} van de PDC Order of Merit (${tm('nl', r.prize_k)}). Alle WK-partijen, tegenstanders, aanvangstijden en uitslagen op het WK darts 2026/27.` : `${n} op het WK darts 2026/27: tegenstanders, aanvangstijden en uitslagen.`,
+        plLead: (n, r) => r ? `${n} staat op <b>plaats ${r.rank}</b> van de PDC-wereldranglijst met ${tm('nl', r.prize_k)} prijzengeld uit de laatste twee jaar.` : `${n} doet mee aan het WK darts 2026/27.`, plCrumb: 'Spelers', mv: m => m > 0 ? ` Sinds de vorige stand ${m} ${m === 1 ? 'plaats' : 'plaatsen'} gestegen.` : m < 0 ? ` Sinds de vorige stand ${-m} ${-m === 1 ? 'plaats' : 'plaatsen'} gezakt.` : '',
+        wm: 'Op het WK darts 2026/27', wmNone: 'De partijen worden bekend bij de loting op maandag 30 november. Tegenstander, datum en aanvangstijd verschijnen daarna hier.', next: 'Volgende partij', out: r => `Uitgeschakeld in de ${r.toLowerCase()}.`, th: ['Datum', 'Tijd', 'Ronde', 'Tegenstander', 'Uitslag'], vs: 'tegen', story: 'Meer over', neigh: 'Ernaast in de ranglijst', toOom: 'Complete wereldranglijst', toTipp: 'Voorspel zijn partijen', pro: 'Profdarter',
+        ltTitle: 'WK darts liveticker 2026/27: live-uitslagen & standen | Darts aktuell', ltDesc: 'WK darts 2026/27 live: alle partijen van de dag met tussenstanden in sets en legs, uitslagen en aanvangstijden – ververst vanzelf.', ltH1: 'WK darts <span>live</span>', ltIntro: 'Alle partijen van de dag met de tussenstand in sets en legs. De pagina ververst elke 30 seconden – laat hem gewoon openstaan.', ltCrumb: 'Live-uitslagen', ltShare: 'WK darts live-uitslagen 🎯' }
+};
+function tm(c, k) { return '£' + Math.round(Number(k) * 1000).toLocaleString(c === 'en' ? 'en-GB' : 'nl-NL'); }
+const POPULAR = [170, 167, 164, 161, 160, 141, 121, 100, 81, 60, 40, 32];
+// Spieler: Weltrangliste + alle WM-Teilnehmer aus den Paarungen
+const plMap = new Map();
+for (const r of oom) plMap.set(r.player, { name: r.player, r });
+for (const m of data.matches) for (const n of [m.player1, m.player2]) if (n && !/^(tbd|tba|n\.?\s?n\.?)$/i.test(n) && !plMap.has(n)) plMap.set(n, { name: n, r: null });
+const players = [...plMap.values()].map(p => ({ ...p, slug: slugify(p.name) })).filter(p => p.slug);
+for (const p of players) ALT[`${PL_BASE.de}${p.slug}/`] = { de: `${PL_BASE.de}${p.slug}/`, en: `${PL_BASE.en}${p.slug}/`, nl: `${PL_BASE.nl}${p.slug}/` };
+ALT['/erinnerung-abmelden/'] = { de: '/erinnerung-abmelden/', en: '/en/unsubscribe/', nl: '/nl/afmelden/' };
+ALT['/liveticker/'] = ALT['/liveticker/'] || { de: '/liveticker/', en: PATHS.en['/liveticker/'], nl: PATHS.nl['/liveticker/'] };
+
+for (const C of ['de', 'en', 'nl']) {
+  const PG = PAGERS[C]; if (!PG) continue;
+  const X = XT[C], home = PG.home, coBase = CO_BASE[C], plBase = PL_BASE[C];
+  const loc = PG.L.locale, tz = PG.L.tz, rt = PG.L.rt || {};
+  const out = (url, html) => write(url.replace(/^\//, '') + 'index.html', html);
+  const P = (meta, body, scripts) => C === 'de' ? PG.page(meta, body, scripts) : PG.page({ ...meta, de: meta.de }, body, scripts);
+  // Finish-Seiten
+  for (let v = 170; v >= 2; v--) {
+    const r = co.suggest(v), url = `${coBase}${v}/`, de = `${CO_BASE.de}${v}/`;
+    let body = `<section class="band"><div class="wrap co-page">`;
+    if (r) {
+      body += `<h2>${X.best}</h2><p class="route big">${chips(r)}</p><p>${X.why}</p>`;
+      const al = alternatives(v);
+      if (al.length) body += `<h2>${X.alts}</h2><ul class="co-alts">${al.map(d => `<li>${chips(d)}</li>`).join('')}</ul>`;
+      const f = r[0];
+      if (r.length >= 2 && f.k === 't') { const n = f.v / 3, left = v - n, r2 = co.suggest(left, 2); body += `<h2>${X.planB}</h2><p>${X.planBtxt(`<b>${f.l}</b>`, n, left, r2)}</p>`; }
+    } else {
+      const s = setupFor(v);
+      if (s && co.suggest(s.left, 3)) body += `<h2>${X.setup}</h2><p>${X.setupTxt(s)}</p>`;
+    }
+    const near = [...new Set([v + 1, v - 1, ...POPULAR])].filter(x => x >= 2 && x <= 170 && x !== v).slice(0, 14);
+    body += `<h2>${X.near}</h2><p class="co-near">${near.map(x => `<a href="${coBase}${x}/">${x}</a>`).join(' ')}</p><p><a class="btn-y" href="${PATHS[C] ? PATHS[C]['/checkout-rechner/'] : '/checkout-rechner/'}">${X.calc}</a></p>${PG.promo}</div></section>`;
+    const ld = [crumbs([['Darts aktuell', home], [X.crumb, C === 'de' ? '/checkout-rechner/' : PATHS[C]['/checkout-rechner/']], [String(v), url]]),
+      { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: [{ '@type': 'Question', name: X.faqQ(v), acceptedAnswer: { '@type': 'Answer', text: X.faqA(v, r) } }] }];
+    out(url, P({ title: X.coTitle(v, r), desc: X.coDesc(v, r), url, de, ld },
+      PG.intro(X.coH1(v), X.coLead(v, r), PG.crumbs([[PG.T.home, home], [X.crumb, C === 'de' ? '/checkout-rechner/' : PATHS[C]['/checkout-rechner/']], [String(v), url]]), null) + body, []));
+    pages.push({ url, pri: '0.6', freq: 'yearly' });
+  }
+  // Spielerseiten
+  const dOf = iso => new Date(iso).toLocaleDateString(loc, { timeZone: tz, weekday: 'short', day: 'numeric', month: 'short' });
+  const tOf = iso => new Date(iso).toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit', timeZone: tz });
+  const sorted = [...players].sort((a, b) => (a.r ? a.r.rank : 999) - (b.r ? b.r.rank : 999) || a.name.localeCompare(b.name));
+  for (const [i, p] of sorted.entries()) {
+    const url = `${plBase}${p.slug}/`, de = `${PL_BASE.de}${p.slug}/`, r = p.r;
+    const ms = data.matches.filter(m => m.player1 === p.name || m.player2 === p.name).sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+    const rows = ms.map(m => { const me1 = m.player1 === p.name, opp = me1 ? m.player2 : m.player1, done = m.sets1 != null && m.sets2 != null;
+      const my = me1 ? m.sets1 : m.sets2, th = me1 ? m.sets2 : m.sets1, oppP = plMap.get(opp) ? `<a href="${plBase}${slugify(opp)}/">${esc(opp)}</a>` : esc(opp);
+      return `<tr${done ? (my > th ? ' class="win"' : ' class="loss"') : ''}><td>${dOf(m.starts_at)}</td><td>${tOf(m.starts_at)}</td><td>${esc(rt[m.round] || m.round)}</td><td>${oppP}</td><td>${done ? `${my}:${th}` : '–'}</td></tr>`; }).join('');
+    const lost = ms.find(m => m.sets1 != null && m.sets2 != null && ((m.player1 === p.name) ? m.sets1 < m.sets2 : m.sets2 < m.sets1));
+    const nextM = ms.find(m => m.sets1 == null && new Date(m.starts_at) > new Date());
+    const mvN = r && r.prev_rank ? r.prev_rank - r.rank : 0;
+    const story = (PG.news || []).find(n => (n.slug0 || n.slug) === `${p.slug}-darts-wm-2027`);
+    const storyUrl = story ? (C === 'de' ? `/news/${story.slug}/` : story.path) : '';
+    const neigh = r ? sorted.filter(x => x.r && Math.abs(x.r.rank - r.rank) <= 2 && x !== p) : [];
+    const body = `<section class="band"><div class="wrap pl-page">
+<h2>${X.wm}</h2>${ms.length ? `${nextM ? `<p class="pl-next"><b>${X.next}:</b> ${dOf(nextM.starts_at)}, ${tOf(nextM.starts_at)} – ${X.vs} ${esc(nextM.player1 === p.name ? nextM.player2 : nextM.player1)} (${esc(rt[nextM.round] || nextM.round)})</p>` : ''}${lost ? `<p class="pl-out">${X.out(rt[lost.round] || lost.round)}</p>` : ''}
+<table class="stack"><thead><tr>${X.th.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>` : `<p>${X.wmNone}</p>`}
+${storyUrl ? `<p><a class="btn-y" href="${storyUrl}">${X.story} ${esc(p.name)}</a></p>` : ''}
+${neigh.length ? `<h2>${X.neigh}</h2><p class="co-near">${neigh.map(x => `<a href="${plBase}${x.slug}/">${x.r.rank}. ${esc(x.name)}</a>`).join(' ')}</p>` : ''}
+<p><a class="btn-y" href="${C === 'de' ? '/pdc-weltrangliste/' : PATHS[C]['/pdc-weltrangliste/']}">${X.toOom}</a> <a class="btn-r" href="${C === 'de' ? '/darts-tippspiel/' : PATHS[C]['/darts-tippspiel/']}">${X.toTipp}</a></p>
+${PG.promo}</div></section>`;
+    const ld = [crumbs([['Darts aktuell', home], [X.plCrumb, C === 'de' ? '/pdc-weltrangliste/' : PATHS[C]['/pdc-weltrangliste/']], [p.name, url]]), { '@context': 'https://schema.org', '@type': 'Person', name: p.name, jobTitle: X.pro, url: SITE + url }];
+    out(url, P({ title: X.plTitle(p.name), desc: X.plDesc(p.name, r), url, de, ld },
+      PG.intro(esc(p.name), X.plLead(esc(p.name), r) + X.mv(mvN), PG.crumbs([[PG.T.home, home], [X.plCrumb, C === 'de' ? '/pdc-weltrangliste/' : PATHS[C]['/pdc-weltrangliste/']], [p.name, url]]), null) + body, []));
+    pages.push({ url, pri: '0.6', freq: 'daily' });
+  }
+  // Liveticker
+  const lUrl = C === 'de' ? '/liveticker/' : PATHS[C]['/liveticker/'];
+  out(lUrl, P({ title: X.ltTitle, desc: X.ltDesc, url: lUrl, de: '/liveticker/', ld: crumbs([['Darts aktuell', home], [X.ltCrumb, lUrl]]) },
+    PG.intro(X.ltH1, X.ltIntro, PG.crumbs([[PG.T.home, home], [X.ltCrumb, lUrl]]), C === 'de' ? [lUrl, X.ltShare] : null) + `<section class="band"><div class="wrap"><div id="live" class="live" aria-live="polite"></div></div></section>`, ['db', 'live']));
+  pages.push({ url: lUrl, pri: '0.9', freq: 'always' });
+  // Abmeldung von der Tipp-Erinnerung (Link aus der Mail)
+  const UN = { de: ['/erinnerung-abmelden/', 'Tipp-Erinnerung abbestellen', 'Erinnerung <span>abbestellen</span>', 'Einen Moment …', 'Erledigt: Du bekommst keine Tipp-Erinnerungen mehr. Einschalten kannst du sie jederzeit wieder im Tippspiel.', 'Der Link ist ungültig oder schon benutzt. Du kannst die Erinnerung im Tippspiel unter deinem Spielernamen ausschalten.', 'Zum Tippspiel', '/darts-tippspiel/'],
+    en: ['/en/unsubscribe/', 'Unsubscribe from reminders', 'Stop <span>reminders</span>', 'One moment …', 'Done: you will not get any more reminders. You can switch them back on in the predictor at any time.', 'This link is invalid or was already used. You can switch reminders off in the predictor below your player name.', 'Go to the predictor', '/en/darts-predictor/'],
+    nl: ['/nl/afmelden/', 'Afmelden voor herinneringen', 'Herinneringen <span>uitzetten</span>', 'Een moment …', 'Gelukt: je krijgt geen herinneringen meer. Je kunt ze in de poule altijd weer aanzetten.', 'Deze link is ongeldig of al gebruikt. Je kunt herinneringen in de poule onder je spelersnaam uitzetten.', 'Naar de poule', '/nl/wk-darts-poule/'] }[C];
+  out(UN[0], P({ title: UN[1] + ' | Darts aktuell', desc: UN[1], url: UN[0], de: '/erinnerung-abmelden/', noindex: true },
+    PG.intro(UN[2], '', '', null) + `<section class="band"><div class="wrap"><p id="unsub" class="lt-empty">${UN[3]}</p><p><a class="btn-r" href="${UN[7]}" style="display:inline-block;padding:10px 18px;text-decoration:none;font-weight:700">${UN[6]}</a></p></div></section>
+<script>addEventListener('load',async()=>{const o=document.getElementById('unsub'),t=new URLSearchParams(location.search).get('t'),C=window.DARTS_CONFIG||{};let ok=false;try{if(t&&/^[0-9a-f-]{36}$/i.test(t)&&window.supabase){const sb=window.DARTS_SB||window.supabase.createClient(C.supabaseUrl,C.supabaseAnonKey);const r=await sb.rpc('reminder_unsubscribe',{p_token:t});ok=!r.error&&r.data===true}}catch(e){}o.textContent=ok?${JSON.stringify(UN[4])}:${JSON.stringify(UN[5])}})</script>`, ['db']).replace('<meta charset="utf-8">', '<meta charset="utf-8">\n<meta name="robots" content="noindex">'));
+  console.log(`${C}: ${170 - 1} Finish-Seiten, ${players.length} Spielerseiten, Liveticker`);
+}
+
 // Versionsnummern auch für die Sprach-Skripte (die Seiten oben sind schon geschrieben → nachträglich ersetzen)
 for (const C of Object.keys(LANGS)) {
   const walk = d => { for (const f of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, f.name); if (f.isDirectory()) walk(p); else if (f.name.endsWith('.html')) { let h = fs.readFileSync(p, 'utf8'); for (const n of ['app.js', 'tippspiel.js', 'news.js']) h = h.split(`"/${C}/${n}"`).join(`"/${C}/${n}?v=${VER[C + '/' + n]}"`); fs.writeFileSync(p, h); } } };
@@ -509,7 +655,7 @@ if (process.env.CI) {
   try {
     const live = await (await fetch(SITE + '/sitemap.xml', { headers: { 'Cache-Control': 'no-cache' } })).text();
     const seen = new Set([...live.matchAll(/<loc>([^<]+)<\/loc><lastmod>([^<]+)<\/lastmod>/g)].map(m => m[1] + '|' + m[2]));
-    const changed = pages.filter(p => !seen.has(SITE + p.url + '|' + (p.mod || now)) && !(p.freq === 'hourly' && seen.has(SITE + p.url + '|' + now))).map(p => SITE + p.url).slice(0, 100);
+    const changed = pages.filter(p => !seen.has(SITE + p.url + '|' + (p.mod || now)) && !(p.freq === 'hourly' && seen.has(SITE + p.url + '|' + now))).map(p => SITE + p.url).slice(0, 2000);
     if (changed.length) {
       const r = await fetch('https://api.indexnow.org/indexnow', { method: 'POST', headers: { 'Content-Type': 'application/json; charset=utf-8' },
         body: JSON.stringify({ host: 'dartsaktuell.com', key: INDEXNOW_KEY, keyLocation: `${SITE}/${INDEXNOW_KEY}.txt`, urlList: changed }) });

@@ -4,8 +4,8 @@
 
 // Deutsche Adresse → Adresse in der jeweiligen Sprache
 export const PATHS = {
-  en: { '/': '/en/', '/news/': '/en/news/', '/darts-wm-spielplan/': '/en/darts-world-championship-schedule/', '/darts-tippspiel/': '/en/darts-predictor/', '/darts-punkte-rechner/': '/en/darts-scorer/', '/checkout-rechner/': '/en/darts-checkout-chart/', '/pdc-weltrangliste/': '/en/pdc-order-of-merit/' },
-  nl: { '/': '/nl/', '/news/': '/nl/nieuws/', '/darts-wm-spielplan/': '/nl/wk-darts-speelschema/', '/darts-tippspiel/': '/nl/wk-darts-poule/', '/darts-punkte-rechner/': '/nl/darts-scorebord/', '/checkout-rechner/': '/nl/darts-uitgooi-tabel/', '/pdc-weltrangliste/': '/nl/pdc-wereldranglijst/' }
+  en: { '/': '/en/', '/news/': '/en/news/', '/darts-wm-spielplan/': '/en/darts-world-championship-schedule/', '/darts-tippspiel/': '/en/darts-predictor/', '/darts-punkte-rechner/': '/en/darts-scorer/', '/checkout-rechner/': '/en/darts-checkout-chart/', '/pdc-weltrangliste/': '/en/pdc-order-of-merit/', '/liveticker/': '/en/live-scores/' },
+  nl: { '/': '/nl/', '/news/': '/nl/nieuws/', '/darts-wm-spielplan/': '/nl/wk-darts-speelschema/', '/darts-tippspiel/': '/nl/wk-darts-poule/', '/darts-punkte-rechner/': '/nl/darts-scorebord/', '/checkout-rechner/': '/nl/darts-uitgooi-tabel/', '/pdc-weltrangliste/': '/nl/pdc-wereldranglijst/', '/liveticker/': '/nl/live-uitslagen/' }
 };
 
 // Runden, Bonusfragen und Turniernamen aus der Datenbank (nur Anzeige, gespeichert wird weiter der deutsche Wert)
@@ -31,7 +31,7 @@ const EN = {
     ["b.setAttribute('aria-label','Menü öffnen')", "b.setAttribute('aria-label','Open menu')"],
     ['<a href="/news/">Alle News</a> · <a href="/darts-wm-spielplan/">Darts-WM Spielplan</a> · <a href="/darts-tippspiel/">Darts-Tippspiel</a> · <a href="/checkout-rechner/">Checkout-Rechner</a> · <a href="/darts-punkte-rechner/">Punkte-Rechner</a>', '<a href="/news/">All news</a> · <a href="/darts-wm-spielplan/">World Darts Championship schedule</a> · <a href="/darts-tippspiel/">Darts predictor</a> · <a href="/checkout-rechner/">Checkout chart</a> · <a href="/darts-punkte-rechner/">Darts scorer</a>'],
     ['aria-label="Menü öffnen"', 'aria-label="Open menu"'],
-    ['>Turniere</a>', '>Tournaments</a>'], ['>WM-Spielplan</a>', '>Schedule</a>'], ['>Tippspiel</a>', '>Predictor</a>'], ['>Punkte-Rechner</a>', '>Scorer</a>'], ['>Weltrangliste</a>', '>Order of Merit</a>'], ['>Weltmeister</a>', '>Champions</a>'],
+    ['>Turniere</a>', '>Tournaments</a>'], ['>WM-Spielplan</a>', '>Schedule</a>'], ['>Liveticker</a>', '>Live scores</a>'], ['>Tippspiel</a>', '>Predictor</a>'], ['>Punkte-Rechner</a>', '>Scorer</a>'], ['>Weltrangliste</a>', '>Order of Merit</a>'], ['>Weltmeister</a>', '>Champions</a>'],
     ['<h1>Darts-News <span>&amp; WM 2026/27</span></h1>', '<h1>Darts news <span>&amp; World Championship 2026/27</span></h1>'],
     ['Alles rund um die Darts-WM im Ally Pally und die großen PDC-Turniere.', 'Everything about the World Darts Championship at Ally Pally and the big PDC events.'],
     ['aria-label="WM kompakt"', 'aria-label="World Championship at a glance"'], ['<h2>WM kompakt</h2>', '<h2>At a glance</h2>'],
@@ -123,6 +123,20 @@ const EN = {
       ['data-act="undo">Zurück</button><button type="button" class="padact" data-act="new">Neues Spiel</button>', 'data-act="undo">Undo</button><button type="button" class="padact" data-act="new">New game</button>']
     ],
     'tippspiel.js': [
+      ["url = location.origin + '/darts-tippspiel/'", "url = location.origin + '/en/darts-predictor/'"],
+    ["📸 Platz teilen", "📸 Share my rank"],
+      ["E-Mail-Erinnerung am Morgen jedes WM-Spieltags, falls noch Tipps fehlen", "Email reminder on the morning of each World Championship match day if picks are missing"],
+      ["'MEIN PLATZ IM DARTS-WM TIPPSPIEL'", "'MY RANK IN THE DARTS PREDICTOR'"],
+      ["`von ${total} Tippern`", "`of ${total} players`"],
+      ["`${me.points} Punkte`", "`${me.points} points`"],
+      ["`${me.exact_hits} exakte Treffer · ${me.bonus_points} Bonuspunkte`", "`${me.exact_hits} exact scores · ${me.bonus_points} bonus points`"],
+      ["'Tipp mit: dartsaktuell.com/darts-tippspiel'", "'Play: dartsaktuell.com/en/darts-predictor'"],
+      ["'Darts-WM 2026/27 · inoffizielle Fanseite'", "'World Darts Championship 2026/27 · unofficial fan site'"],
+      ["'mein-platz-darts-tippspiel.png'", "'my-rank-darts-predictor.png'"],
+      ["`Ich bin ${me.rank}. von ${total} im Darts-WM Tippspiel (${league}) – tipp mit:`", "`I'm number ${me.rank} of ${total} in the World Darts Championship predictor (${league}) – join in:`"],
+      ["'Bild gespeichert – jetzt z. B. in WhatsApp oder Instagram teilen.'", "'Image saved – now share it on WhatsApp or Instagram, for example.'"],
+      ["const lang = 'de';", "const lang = 'en';"],
+      ["'Erinnerung an: Du bekommst an WM-Spieltagen morgens eine Mail, wenn Tipps fehlen.' : 'Erinnerung aus.'", "'Reminder on: on match days you get an email in the morning if picks are missing.' : 'Reminder off.'"],
       ["const TZ = 'Europe/Berlin';", "const TZ = 'Europe/London';"],
       ['const esc = s =>', "const tr = s => (window.DARTS_RT || {})[s] || s;\n  const esc = s =>"],
       ["toLocaleDateString('de-DE', long", "toLocaleDateString('en-GB', long"],
@@ -206,6 +220,7 @@ const EN = {
     ],
     'news.js': [
       ["const TZ = 'Europe/Berlin';", "const TZ = 'Europe/London';"],
+      ['href="/spieler/${slugify(r.player)}/"', 'href="/en/players/${slugify(r.player)}/"'],
       ['const esc = s =>', "const tr = s => (window.DARTS_RT || {})[s] || s;\n  const esc = s =>"],
       ['const fmtDay = iso => { const [, m, d] = iso.split(\'-\'); return `${+d}.${+m}.`; };', 'const MON = [\'Jan\',\'Feb\',\'Mar\',\'Apr\',\'May\',\'Jun\',\'Jul\',\'Aug\',\'Sep\',\'Oct\',\'Nov\',\'Dec\'];\n  const fmtDay = iso => { const [, m, d] = iso.split(\'-\'); return `${+d} ${MON[m - 1]}`; };'],
       ['`${+a.slice(8)}.–${fmtDay(b)}`', '`${+a.slice(8)}–${fmtDay(b)}`'],
@@ -267,7 +282,7 @@ const NL = {
     ['<a href="/news/">Alle News</a> · <a href="/darts-wm-spielplan/">Darts-WM Spielplan</a> · <a href="/darts-tippspiel/">Darts-Tippspiel</a> · <a href="/checkout-rechner/">Checkout-Rechner</a> · <a href="/darts-punkte-rechner/">Punkte-Rechner</a>', '<a href="/news/">Al het nieuws</a> · <a href="/darts-wm-spielplan/">WK darts speelschema</a> · <a href="/darts-tippspiel/">WK darts poule</a> · <a href="/checkout-rechner/">Uitgooi-tabel</a> · <a href="/darts-punkte-rechner/">Darts scorebord</a>'],
     ['aria-label="Menü öffnen"', 'aria-label="Menu openen"'],
     ['<a href="/news/">News</a><a href="/#turniere">', '<a href="/news/">Nieuws</a><a href="/#turniere">'],
-    ['>Turniere</a>', '>Toernooien</a>'], ['>WM-Spielplan</a>', '>Speelschema</a>'], ['>Tippspiel</a>', '>WK-poule</a>'], ['>Punkte-Rechner</a>', '>Scorebord</a>'], ['>Checkout</a>', '>Uitgooien</a>'], ['>Weltrangliste</a>', '>Ranglijst</a>'], ['>Weltmeister</a>', '>Kampioenen</a>'],
+    ['>Turniere</a>', '>Toernooien</a>'], ['>WM-Spielplan</a>', '>Speelschema</a>'], ['>Liveticker</a>', '>Live</a>'], ['>Tippspiel</a>', '>WK-poule</a>'], ['>Punkte-Rechner</a>', '>Scorebord</a>'], ['>Checkout</a>', '>Uitgooien</a>'], ['>Weltrangliste</a>', '>Ranglijst</a>'], ['>Weltmeister</a>', '>Kampioenen</a>'],
     ['<h1>Darts-News <span>&amp; WM 2026/27</span></h1>', '<h1>Dartsnieuws <span>&amp; WK 2026/27</span></h1>'],
     ['Alles rund um die Darts-WM im Ally Pally und die großen PDC-Turniere.', 'Alles over het WK darts in Ally Pally en de grote PDC-toernooien.'],
     ['aria-label="WM kompakt"', 'aria-label="WK in het kort"'], ['<h2>WM kompakt</h2>', '<h2>WK in het kort</h2>'],
@@ -360,6 +375,20 @@ const nlJs = {
     ['data-act="undo">Zurück</button><button type="button" class="padact" data-act="new">Neues Spiel</button>', 'data-act="undo">Terug</button><button type="button" class="padact" data-act="new">Nieuw spel</button>']
   ],
   'tippspiel.js': [
+    ["📸 Platz teilen", "📸 Deel mijn plek"],
+    ["url = location.origin + '/darts-tippspiel/'", "url = location.origin + '/nl/wk-darts-poule/'"],
+    ["E-Mail-Erinnerung am Morgen jedes WM-Spieltags, falls noch Tipps fehlen", "Herinnering per e-mail op de ochtend van elke WK-speeldag als er nog voorspellingen ontbreken"],
+    ["'MEIN PLATZ IM DARTS-WM TIPPSPIEL'", "'MIJN PLEK IN DE WK DARTS POULE'"],
+    ["`von ${total} Tippern`", "`van ${total} deelnemers`"],
+    ["`${me.points} Punkte`", "`${me.points} punten`"],
+    ["`${me.exact_hits} exakte Treffer · ${me.bonus_points} Bonuspunkte`", "`${me.exact_hits} exacte uitslagen · ${me.bonus_points} bonuspunten`"],
+    ["'Tipp mit: dartsaktuell.com/darts-tippspiel'", "'Doe mee: dartsaktuell.com/nl/wk-darts-poule'"],
+    ["'Darts-WM 2026/27 · inoffizielle Fanseite'", "'WK darts 2026/27 · onofficiële fansite'"],
+    ["'mein-platz-darts-tippspiel.png'", "'mijn-plek-wk-darts-poule.png'"],
+    ["`Ich bin ${me.rank}. von ${total} im Darts-WM Tippspiel (${league}) – tipp mit:`", "`Ik sta ${me.rank}e van ${total} in de WK darts poule (${league}) – doe mee:`"],
+    ["'Bild gespeichert – jetzt z. B. in WhatsApp oder Instagram teilen.'", "'Afbeelding opgeslagen – deel hem nu bijvoorbeeld via WhatsApp of Instagram.'"],
+    ["const lang = 'de';", "const lang = 'nl';"],
+    ["'Erinnerung an: Du bekommst an WM-Spieltagen morgens eine Mail, wenn Tipps fehlen.' : 'Erinnerung aus.'", "'Herinnering aan: op speeldagen krijg je ’s ochtends een mail als er voorspellingen ontbreken.' : 'Herinnering uit.'"],
     ['const esc = s =>', "const tr = s => (window.DARTS_RT || {})[s] || s;\n  const esc = s =>"],
     ["toLocaleDateString('de-DE', long", "toLocaleDateString('nl-NL', long"],
     ["toLocaleTimeString('de-DE',", "toLocaleTimeString('nl-NL',"], ["toLocaleString('de-DE',", "toLocaleString('nl-NL',"],
@@ -442,6 +471,7 @@ const nlJs = {
   ],
   'news.js': [
     ["const TZ = 'Europe/Berlin';", "const TZ = 'Europe/Amsterdam';"],
+    ['href="/spieler/${slugify(r.player)}/"', 'href="/nl/spelers/${slugify(r.player)}/"'],
     ['const esc = s =>', "const tr = s => (window.DARTS_RT || {})[s] || s;\n  const esc = s =>"],
     ['const fmtDay = iso => { const [, m, d] = iso.split(\'-\'); return `${+d}.${+m}.`; };', 'const MON = [\'jan\',\'feb\',\'mrt\',\'apr\',\'mei\',\'jun\',\'jul\',\'aug\',\'sep\',\'okt\',\'nov\',\'dec\'];\n  const fmtDay = iso => { const [, m, d] = iso.split(\'-\'); return `${+d} ${MON[m - 1]}`; };'],
     ['`${+a.slice(8)}.–${fmtDay(b)}`', '`${+a.slice(8)}–${fmtDay(b)}`'],
