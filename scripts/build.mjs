@@ -48,6 +48,24 @@ try {
 }
 data.news.sort((a, b) => String(b.date).localeCompare(String(a.date)) || (b.id > a.id ? 1 : -1));
 
+/* ---------- PDC-Weltrangliste (Order of Merit) ---------- */
+let oom = [], oomMeta = null;
+try {
+  const [o, m] = await Promise.all([rest('order_of_merit?select=*&order=rank,player'), rest('oom_meta?select=*')]);
+  oom = o; oomMeta = m[0] || null;
+  if (!oom.length) throw new Error('leer');
+} catch (err) {
+  console.warn('Weltrangliste aus data/oom.csv:', err.message);
+  const DE = ['Martin Schindler','Niko Springer','Ricardo Pietreczko','Gabriel Clemens','Max Hopp','Lukas Wenig','Kai Gotthardt','Dominik Gruellich','Arno Merk','Maximilian Czerwinski'];
+  oom = rd('data/oom.csv').trim().split('\n').map(l => { const [r, n, p] = l.split(','); return { rank: +r, player: n, prize_k: +p, prev_rank: null, country: DE.includes(n) ? 'de' : null }; });
+  oomMeta = { as_of: '2026-11-22', note: 'nach dem Grand Slam of Darts', source: 'dartsrankings.com', source_url: 'https://www.dartsrankings.com/' };
+}
+const money = k => '£' + Math.round(Number(k) * 1000).toLocaleString('de-DE');
+const oomRow = (r, i) => { const mv = r.prev_rank ? r.prev_rank - r.rank : 0;
+  return `<tr${r.country === 'de' ? ' class="de"' : ''}><td class="r"><b>${r.rank}</b></td><td class="mv">${mv > 0 ? `<span class="up">▲${mv}</span>` : mv < 0 ? `<span class="down">▼${-mv}</span>` : ''}</td><td>${esc(r.player)}${r.country === 'de' ? ' <span class="flag" title="Deutschland">DE</span>' : ''}</td><td class="r">${money(r.prize_k)}</td></tr>`; };
+const oomStand = oomMeta ? `Stand: ${fmtDateLong(oomMeta.as_of)}${oomMeta.note ? ' (' + esc(oomMeta.note) + ')' : ''}` : '';
+function fmtDateLong(d) { return new Date(d + 'T12:00:00Z').toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Berlin' }); }
+
 /* ---------- Slugs für News ---------- */
 const slugify = s => String(s).toLowerCase()
   .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
@@ -183,6 +201,7 @@ if (fs.existsSync(path.join(OUT, 'admin.html'))) fs.writeFileSync(path.join(OUT,
 // Startseite: News fest einbauen
 const li = Math.max(0, data.news.findIndex(n => n.top));
 const lead = data.news[li];
+index = index.replace('<!--PRERENDER:oom-->', oom.slice(0, 10).map(oomRow).join('')).replace('<!--PRERENDER:oomstand-->', oomStand);
 index = index.replace('<!--PRERENDER:lead-->', lead ? leadHtml(lead) : '')
   .replace('<!--PRERENDER:list-->', data.news.filter((_, i) => i !== li).slice(0, 6).map(n => cardHtml(n)).join(''));
 write('index.html', index);
@@ -289,6 +308,29 @@ write('checkout-rechner/index.html', page(
   ['app']
 ));
 pages.push({ url: '/checkout-rechner/', pri: '0.8', freq: 'monthly' });
+
+// PDC-Weltrangliste
+const deTop = oom.filter(r => r.country === 'de');
+write('pdc-weltrangliste/index.html', page(
+  { title: 'Darts-Weltrangliste aktuell: PDC Order of Merit nach Preisgeld | Darts aktuell', desc: `Die aktuelle PDC-Weltrangliste (Order of Merit): alle Top-128-Spieler mit Preisgeld der letzten zwei Jahre, Auf- und Absteiger und die besten Deutschen. ${oomStand}.`, url: '/pdc-weltrangliste/',
+    ld: [crumbs([['Darts aktuell', '/'], ['PDC-Weltrangliste', '/pdc-weltrangliste/']]),
+      { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: [
+        { '@type': 'Question', name: 'Wer ist die Nummer 1 der Darts-Weltrangliste?', acceptedAnswer: { '@type': 'Answer', text: oom[0] ? `${oom[0].player} führt die PDC Order of Merit mit ${money(oom[0].prize_k)} Preisgeld an (${oomStand}).` : '' } },
+        { '@type': 'Question', name: 'Wie wird die Darts-Weltrangliste berechnet?', acceptedAnswer: { '@type': 'Answer', text: 'Die PDC Order of Merit zählt das Preisgeld aller Ranglistenturniere der letzten zwei Jahre. Jedes gewonnene Pfund zählt, nach zwei Jahren fällt das Preisgeld wieder heraus. Die Top 32 sind bei der WM gesetzt.' } },
+        { '@type': 'Question', name: 'Wer ist der beste deutsche Darts-Spieler in der Weltrangliste?', acceptedAnswer: { '@type': 'Answer', text: deTop[0] ? `${deTop[0].player} ist als Nummer ${deTop[0].rank} der bestplatzierte Deutsche (${money(deTop[0].prize_k)}).` : '' } }] }] },
+  intro('PDC-Weltrangliste <span>aktuell</span>', `Die Order of Merit nach Preisgeld der letzten zwei Jahre – die offizielle Darts-Weltrangliste. ${oomStand}.`, crumbNav([['Startseite', '/'], ['PDC-Weltrangliste', '/pdc-weltrangliste/']]), ['/pdc-weltrangliste/', 'Die aktuelle Darts-Weltrangliste (PDC Order of Merit) mit allen Preisgeldern 🎯'])
+  + `<section class="band"><div class="wrap">
+${deTop.length ? `<p class="oom-de"><b>Beste Deutsche:</b> ${deTop.slice(0, 6).map(r => `${esc(r.player)} (${r.rank}.)`).join(' · ')}</p>` : ''}
+<div class="oom-wrap"><table class="oom" id="oomTable"><thead><tr><th class="r">Platz</th><th></th><th>Spieler</th><th class="r">Preisgeld</th></tr></thead><tbody id="oomBody">${oom.map(oomRow).join('')}</tbody></table></div>
+<p class="note" id="oomStand">${oomStand}. Quelle: <a href="${esc((oomMeta && oomMeta.source_url) || 'https://www.pdc.tv/order-merit')}" rel="noopener" target="_blank">${esc((oomMeta && oomMeta.source) || 'PDC')}</a>. Die Liste wird nach jedem Turnier automatisch aktualisiert.</p>
+<h2>So funktioniert die Weltrangliste</h2>
+<p>Die PDC rechnet nicht mit Punkten, sondern mit Preisgeld: Alles, was ein Spieler in den letzten zwei Jahren bei Ranglistenturnieren gewonnen hat, zählt – jedes Pfund ist ein Punkt. Nach zwei Jahren fällt das Geld wieder heraus, deshalb muss jeder Spieler seine Ergebnisse vom Vorjahr verteidigen. Die Weltmeisterschaft zahlt mit Abstand am meisten und kann die Rangliste kräftig durcheinanderwirbeln.</p>
+<p>Für die <a href="/darts-wm-spielplan/">Darts-WM</a> sind die Top 32 der Order of Merit gesetzt; dazu kommen die besten Spieler der Pro-Tour-Rangliste und internationale Qualifikanten. Wer am Jahresende außerhalb der Top 64 steht, verliert seine Tour Card.</p>
+${tippPromo}
+</div></section>`,
+  ['db', 'news']
+));
+pages.push({ url: '/pdc-weltrangliste/', pri: '0.9', freq: 'daily' });
 
 /* ---------- sitemap.xml & robots.txt ---------- */
 const now = new Date().toISOString().slice(0, 10);
