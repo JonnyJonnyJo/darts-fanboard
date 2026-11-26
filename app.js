@@ -114,31 +114,137 @@ $('board').innerHTML=svg;
 /* ---------- Scorer (1–4 Spieler) ---------- */
 const KEY='allyPallyScorer1';
 const defNames=n=>Array.from({length:n},(_,i)=>`Spieler ${i+1}`);
-const fresh=(start=501,names=defNames(2))=>{const n=names.length,z=()=>Array(n).fill(0);return{start,names,rest:Array(n).fill(start),legs:z(),cur:0,starter:0,visit:[],pts:z(),darts:z(),m180:z(),hiCo:z(),msg:''}};
+const fresh=(start=501,names=defNames(2),pids)=>{const n=names.length,z=()=>Array(n).fill(0);return{start,names,pids:(pids||[]).slice(0,n).concat(Array(n).fill(null)).slice(0,n),gid:Date.now(),seq:0,legNo:0,vn:z(),rest:Array(n).fill(start),legs:z(),cur:0,starter:0,visit:[],pts:z(),darts:z(),m180:z(),hiCo:z(),msg:''}};
 let S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}
 if(!S||!Array.isArray(S.rest)||!Array.isArray(S.names)||S.rest.length!==S.names.length||S.names.length<1||S.names.length>4)S=fresh();
+if(!Array.isArray(S.pids)||S.pids.length!==S.names.length)S.pids=Array(S.names.length).fill(null);if(!S.gid)S.gid=Date.now();if(!Array.isArray(S.vn))S.vn=Array(S.names.length).fill(0);S.seq=S.seq||0;S.legNo=S.legNo||0;
 const N=()=>S.names.length,nxt=i=>(i+1)%N();
 const hist=[];
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 const snap=()=>{hist.push(JSON.stringify(S));if(hist.length>300)hist.shift()};
 const legWon=()=>{S.starter=nxt(S.starter);S.rest=Array(N()).fill(S.start);S.visit=[];S.cur=S.starter};
 
+/* ---------- Spieler-Profile & Statistik (bleibt im Browser gespeichert) ---------- */
+const PKEY='dartsProfiles1',PLANG=(window.DARTS_LANG||'de');
+const PT={
+ de:{guest:'Gast',newP:'+ Neuer Spieler …',askName:'Name des neuen Spielers:',title:'Meine Statistik',intro:'Lege dir einen Spieler an und wähle ihn oben im Punkte-Rechner aus. Jede Aufnahme wird gespeichert – auch wenn du eine Woche Pause machst, sind deine Werte beim nächsten Mal noch da.',none:'Noch kein Spieler angelegt.',create:'Spieler anlegen',namePh:'Dein Name',period:'Zeitraum',p:{last:'Letztes Spiel',d7:'7 Tage',d30:'30 Tage',all:'Gesamt'},avg:'3-Dart-Average',f9:'First 9 Average',co:'Checkout-Quote',hiS:'Höchste Aufnahme',hiCo:'Höchstes Finish',best:'Bestes Leg',legs:'Legs gewonnen',dpl:'Darts pro Leg',m180:'180er',t140:'140+',t100:'100+',t60:'60+',trV:'Aufnahmen mit Triple',trR:'Triple-Quote',busts:'Busts',favD:'Lieblings-Doppel',favT:'Häufigstes Triple',visits:'Aufnahmen',darts:'Darts',trend:'Average der letzten Spiele',dist:'Verteilung der Aufnahmen',ach:'Erfolge',lastPlay:d=>d===0?'Zuletzt gespielt: heute':d===1?'Zuletzt gespielt: gestern':`Zuletzt gespielt: vor ${d} Tagen`,coNote:'Quote nur aus Würfen über Board oder Zahlenfeld',noData:'Für diesen Zeitraum gibt es noch keine Würfe. Wähle den Spieler oben im Punkte-Rechner aus und leg los.',rename:'Umbenennen',del:'Löschen',delQ:n=>`Spieler „${n}“ mit allen Statistiken löschen?`,exp:'Sicherung herunterladen',imp:'Sicherung laden',impOk:'Sicherung geladen.',impBad:'Die Datei ist keine gültige Sicherung.',backup:'Deine Statistik liegt nur in diesem Browser. Lade ab und zu eine Sicherung herunter – damit kannst du sie auch auf ein anderes Gerät mitnehmen.',vsBefore:(a,b)=>`Letzte 7 Tage ${a} – davor ${b}`,ins:{f9:(d)=>d>=0?`Dein Start ist stark: Die ersten 9 Darts liegen ${d.toFixed(1)} Punkte über deinem Schnitt.`:`Am Anfang verschenkst du Punkte: Die ersten 9 Darts liegen ${(-d).toFixed(1)} unter deinem Schnitt.`,co:q=>q<25?`Auf die Doppel lohnt sich Training: Nur ${q.toFixed(0)} % deiner Darts aufs Doppel sitzen.`:`Starke Doppel: ${q.toFixed(0)} % deiner Darts aufs Doppel sitzen.`,pause:(d,a,b)=>`Nach ${d} Tagen Pause: Dein letztes Spiel hatte ${a} Average, dein Schnitt davor ${b}.`},A:{first180:'Erste 180',ton:'100+ Finish',bull:'Bull-Finish',big:'170er-Finish',leg15:'Leg in 15 Darts',leg12:'Leg in 12 Darts',avg60:'Spiel mit 60+ Average',avg80:'Spiel mit 80+ Average',legs50:'50 Legs gewonnen',streak:'5 Tage gespielt'}},
+ en:{guest:'Guest',newP:'+ New player …',askName:'Name of the new player:',title:'My stats',intro:'Create a player and select it in the scorer above. Every visit is saved – even after a week off, your numbers are still there next time.',none:'No player created yet.',create:'Create player',namePh:'Your name',period:'Period',p:{last:'Last game',d7:'7 days',d30:'30 days',all:'All time'},avg:'3-dart average',f9:'First 9 average',co:'Checkout rate',hiS:'Highest visit',hiCo:'Highest checkout',best:'Best leg',legs:'Legs won',dpl:'Darts per leg',m180:'180s',t140:'140+',t100:'100+',t60:'60+',trV:'Visits with a treble',trR:'Treble rate',busts:'Busts',favD:'Favourite double',favT:'Most hit treble',visits:'Visits',darts:'Darts',trend:'Average of recent games',dist:'Score distribution',ach:'Achievements',lastPlay:d=>d===0?'Last played: today':d===1?'Last played: yesterday':`Last played: ${d} days ago`,coNote:'Rate only from darts entered via board or number pad',noData:'No darts in this period yet. Select the player in the scorer above and start throwing.',rename:'Rename',del:'Delete',delQ:n=>`Delete player “${n}” and all stats?`,exp:'Download backup',imp:'Load backup',impOk:'Backup loaded.',impBad:'This file is not a valid backup.',backup:'Your stats are stored in this browser only. Download a backup now and then – you can also use it to move to another device.',vsBefore:(a,b)=>`Last 7 days ${a} – before ${b}`,ins:{f9:d=>d>=0?`Strong starts: your first 9 darts are ${d.toFixed(1)} above your average.`:`You leave points early: your first 9 darts are ${(-d).toFixed(1)} below your average.`,co:q=>q<25?`Doubles practice pays off: only ${q.toFixed(0)}% of your darts at a double hit.`:`Sharp on the doubles: ${q.toFixed(0)}% of your darts at a double hit.`,pause:(d,a,b)=>`After ${d} days off: your last game averaged ${a}, before that ${b}.`},A:{first180:'First 180',ton:'100+ checkout',bull:'Bull finish',big:'170 checkout',leg15:'15-dart leg',leg12:'12-dart leg',avg60:'Game with 60+ average',avg80:'Game with 80+ average',legs50:'50 legs won',streak:'Played on 5 days'}},
+ nl:{guest:'Gast',newP:'+ Nieuwe speler …',askName:'Naam van de nieuwe speler:',title:'Mijn statistieken',intro:'Maak een speler aan en kies hem hierboven in het scorebord. Elke beurt wordt bewaard – ook na een week pauze staan je cijfers er de volgende keer nog.',none:'Nog geen speler aangemaakt.',create:'Speler aanmaken',namePh:'Jouw naam',period:'Periode',p:{last:'Laatste spel',d7:'7 dagen',d30:'30 dagen',all:'Totaal'},avg:'3-dart-gemiddelde',f9:'First 9-gemiddelde',co:'Uitgooi-percentage',hiS:'Hoogste beurt',hiCo:'Hoogste finish',best:'Beste leg',legs:'Legs gewonnen',dpl:'Pijlen per leg',m180:'180’s',t140:'140+',t100:'100+',t60:'60+',trV:'Beurten met triple',trR:'Triple-percentage',busts:'Busts',favD:'Favoriete dubbel',favT:'Vaakst geraakte triple',visits:'Beurten',darts:'Pijlen',trend:'Gemiddelde van de laatste spellen',dist:'Verdeling van de beurten',ach:'Prestaties',lastPlay:d=>d===0?'Laatst gespeeld: vandaag':d===1?'Laatst gespeeld: gisteren':`Laatst gespeeld: ${d} dagen geleden`,coNote:'Percentage alleen uit pijlen via bord of cijferveld',noData:'Nog geen pijlen in deze periode. Kies de speler hierboven in het scorebord en gooi.',rename:'Hernoemen',del:'Verwijderen',delQ:n=>`Speler „${n}” met alle statistieken verwijderen?`,exp:'Back-up downloaden',imp:'Back-up laden',impOk:'Back-up geladen.',impBad:'Dit bestand is geen geldige back-up.',backup:'Je statistieken staan alleen in deze browser. Download af en toe een back-up – daarmee kun je ook naar een ander apparaat.',vsBefore:(a,b)=>`Laatste 7 dagen ${a} – daarvoor ${b}`,ins:{f9:d=>d>=0?`Sterke start: je eerste 9 pijlen liggen ${d.toFixed(1)} boven je gemiddelde.`:`Je laat in het begin punten liggen: je eerste 9 pijlen liggen ${(-d).toFixed(1)} onder je gemiddelde.`,co:q=>q<25?`Dubbels trainen loont: maar ${q.toFixed(0)}% van je pijlen op een dubbel is raak.`:`Scherp op de dubbels: ${q.toFixed(0)}% van je pijlen op een dubbel is raak.`,pause:(d,a,b)=>`Na ${d} dagen pauze: je laatste spel had ${a} gemiddeld, daarvoor ${b}.`},A:{first180:'Eerste 180',ton:'100+ finish',bull:'Bull-finish',big:'170-finish',leg15:'Leg in 15 pijlen',leg12:'Leg in 12 pijlen',avg60:'Spel met 60+ gemiddelde',avg80:'Spel met 80+ gemiddelde',legs50:'50 legs gewonnen',streak:'Op 5 dagen gespeeld'}}
+}[PLANG]||null;
+const PTX=PT||{};
+let PD;try{PD=JSON.parse(localStorage.getItem(PKEY))}catch(e){PD=null}
+if(!PD||!Array.isArray(PD.players))PD={v:1,players:[],visits:[],legs:[]};
+const psave=()=>{if(PD.visits.length>30000)PD.visits=PD.visits.slice(-30000);if(PD.legs.length>6000)PD.legs=PD.legs.slice(-6000);try{localStorage.setItem(PKEY,JSON.stringify(PD))}catch(e){}};
+const pById=id=>PD.players.find(p=>p.id===id);
+const DBL=v=>(v>=2&&v<=40&&v%2===0)||v===50;
+/* Aufnahme speichern: p = Platz am Board, ds = Darts (oder null bei Schnelleingabe), sc = gewertete Punkte, rb = Rest vorher */
+const recVisit=(p,ds,sc,nd,rb,bust,co)=>{const pid=S.pids&&S.pids[p];if(!pid)return;
+  S.vn[p]=(S.vn[p]||0)+1;
+  PD.visits.push({pid,t:Date.now(),g:S.gid,u:S.seq,n:S.vn[p],s:bust?0:sc,d:nd,rb,b:bust?1:0,c:co?1:0,dl:ds?ds.map(x=>x.l):null});psave()};
+const recLeg=w=>{S.names.forEach((_,p)=>{const pid=S.pids&&S.pids[p];if(!pid)return;
+  const dn=PD.visits.filter(v=>v.pid===pid&&v.g===S.gid&&v.lg===undefined).reduce((a,v)=>a+v.d,0);
+  PD.visits.forEach(v=>{if(v.pid===pid&&v.g===S.gid&&v.lg===undefined)v.lg=S.legNo});
+  PD.legs.push({pid,t:Date.now(),g:S.gid,u:S.seq,w:p===w?1:0,d:dn,st:S.start})});S.legNo=(S.legNo||0)+1;S.vn=Array(N()).fill(0);psave()};
+const pUndo=()=>{const keep=x=>!(x.g===S.gid&&x.u>S.seq);const a=PD.visits.length,b=PD.legs.length;PD.visits=PD.visits.filter(keep);PD.legs=PD.legs.filter(keep);if(a!==PD.visits.length||b!==PD.legs.length){PD.visits.forEach(v=>{if(v.g===S.gid&&v.lg!==undefined&&v.lg>=(S.legNo||0))delete v.lg});psave()}};
+const pSelect=(p)=>{const ids=PD.players.map(x=>x.id);return`<select class="pprof" data-pp="${p}" aria-label="Profil"><option value="">${esc(PTX.guest||'Gast')}</option>${PD.players.map(x=>`<option value="${x.id}"${S.pids[p]===x.id?' selected':''}>${esc(x.name)}</option>`).join('')}<option value="__new">${esc(PTX.newP||'+')}</option></select>`};
+const newPlayer=name=>{name=String(name||'').trim().slice(0,24);if(!name)return null;const id='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);PD.players.push({id,name,c:Date.now()});psave();return id};
+
+/* Auswertung */
+let pView=null,pPer='all';
+const DAY=864e5,fmt1=x=>isFinite(x)?x.toFixed(1):'–',pct=(a,b)=>b?(a/b*100):NaN;
+const calc=(pid,per)=>{
+  let V=PD.visits.filter(v=>v.pid===pid),L=PD.legs.filter(l=>l.pid===pid);
+  if(per==='last'&&V.length){const g=V[V.length-1].g;V=V.filter(v=>v.g===g);L=L.filter(l=>l.g===g)}
+  else if(per==='d7'||per==='d30'){const t0=Date.now()-(per==='d7'?7:30)*DAY;V=V.filter(v=>v.t>=t0);L=L.filter(l=>l.t>=t0)}
+  const sum=(a,f)=>a.reduce((x,y)=>x+f(y),0);
+  const D=sum(V,v=>v.d),P=sum(V,v=>v.s),F=V.filter(v=>v.n<=3),fD=sum(F,v=>v.d),fP=sum(F,v=>v.s);
+  const full=V.filter(v=>!v.b&&v.d===3&&!v.c);
+  let att=0,hit=0,trD=0,detD=0,trV=0;const dbl={},tr={};
+  V.forEach(v=>{if(!v.dl)return;let r=v.rb;let anyT=false;v.dl.forEach((l,i)=>{detD++;if(l[0]==='T'){trD++;anyT=true;tr[l]=(tr[l]||0)+1}
+    if(DBL(r)){att++;if(v.c&&i===v.dl.length-1){hit++;dbl[l]=(dbl[l]||0)+1}}
+    const val=l==='Bull'?50:l==='25'?25:l[0]==='D'?2*+l.slice(1):l[0]==='T'?3*+l.slice(1):+l;r-=val});if(anyT)trV++});
+  const W=L.filter(l=>l.w),top=o=>{const e=Object.entries(o).sort((a,b)=>b[1]-a[1])[0];return e?`${e[0]} (${e[1]}×)`:'–'};
+  const games=[...new Set(V.map(v=>v.g))].map(g=>{const x=V.filter(v=>v.g===g);return{g,t:x[x.length-1].t,a:sum(x,v=>v.d)?sum(x,v=>v.s)/sum(x,v=>v.d)*3:0,n:x.length}});
+  return{V,L,D,avg:D?P/D*3:NaN,f9:fD?fP/fD*3:NaN,co:pct(hit,att),att,hit,hiS:Math.max(0,...V.filter(v=>!v.b).map(v=>v.s)),hiCo:Math.max(0,...V.filter(v=>v.c).map(v=>v.s)),best:W.length?Math.min(...W.map(l=>l.d)):NaN,
+    legs:`${W.length} / ${L.length}`,dpl:W.length?sum(W,l=>l.d)/W.length:NaN,m180:full.filter(v=>v.s===180).length,t140:full.filter(v=>v.s>=140&&v.s<180).length,t100:full.filter(v=>v.s>=100&&v.s<140).length,t60:full.filter(v=>v.s>=60&&v.s<100).length,
+    trV:V.filter(v=>v.dl).length?`${trV} (${fmt1(pct(trV,V.filter(v=>v.dl).length))} %)`:'–',trR:pct(trD,detD),busts:V.filter(v=>v.b).length,favD:top(dbl),favT:top(tr),games,
+    dist:[[0,19],[20,39],[40,59],[60,79],[80,99],[100,139],[140,179],[180,180]].map(([a,b])=>[a===b?'180':`${a}–${b}`,full.filter(v=>v.s>=a&&v.s<=b).length])};
+};
+const spark=gs=>{const g=gs.slice(-20);if(g.length<2)return'';const W=320,H=80,mx=Math.max(...g.map(x=>x.a))*1.1||1,mn=Math.min(...g.map(x=>x.a))*.9;
+  const pts=g.map((x,i)=>[i/(g.length-1)*W,H-(x.a-mn)/((mx-mn)||1)*H]);
+  return`<svg class="pspark" viewBox="-6 -8 ${W+12} ${H+16}" role="img" aria-label="${esc(PTX.trend)}"><polyline fill="none" stroke="var(--red)" stroke-width="3" stroke-linejoin="round" points="${pts.map(p=>p.join(',')).join(' ')}"/>${pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="var(--green)"><title>${new Date(g[i].t).toLocaleDateString()} · ${g[i].a.toFixed(1)}</title></circle>`).join('')}</svg>`};
+const achieve=pid=>{const V=PD.visits.filter(v=>v.pid===pid),L=PD.legs.filter(l=>l.pid===pid&&l.w),A=PTX.A||{};
+  const gs=calc(pid,'all').games.filter(g=>g.n>=6),days=new Set(V.map(v=>new Date(v.t).toDateString())).size;
+  return[['first180',V.some(v=>v.s===180&&!v.c)],['ton',V.some(v=>v.c&&v.s>=100)],['bull',V.some(v=>v.c&&v.dl&&v.dl[v.dl.length-1]==='Bull')],['big',V.some(v=>v.c&&v.s===170)],['leg15',L.some(l=>l.st===501&&l.d<=15)],['leg12',L.some(l=>l.st===501&&l.d<=12)],['avg60',gs.some(g=>g.a>=60)],['avg80',gs.some(g=>g.a>=80)],['legs50',L.length>=50],['streak',days>=5]]
+    .map(([k,ok])=>`<li class="${ok?'ok':''}">${ok?'🏆':'🔒'} ${esc(A[k]||k)}</li>`).join('')};
+const pRender=()=>{const box=$('pstats');if(!box||!PT)return;
+  if(pView&&!pById(pView))pView=null;if(!pView&&PD.players.length)pView=(S.pids||[]).find(Boolean)||PD.players[0].id;
+  const tabs=PD.players.map(x=>`<button type="button" class="dchip${x.id===pView?' on':''}" data-pv="${x.id}">${esc(x.name)}</button>`).join('');
+  let body='';
+  if(!PD.players.length)body=`<p class="note">${esc(PTX.none)}</p>`;
+  else{const s=calc(pView,pPer),all=calc(pView,'all');const pl=pById(pView);
+    const last=all.V.length?Math.floor((Date.now()-all.V[all.V.length-1].t)/DAY):null;
+    const ins=[];
+    if(isFinite(s.f9)&&isFinite(s.avg)&&s.V.length>=9&&Math.abs(s.f9-s.avg)>=3)ins.push(PTX.ins.f9(s.f9-s.avg));
+    if(s.att>=15)ins.push(PTX.ins.co(s.co));
+    const gs=all.games;if(gs.length>=2){const gap=Math.floor((gs[gs.length-1].t-gs[gs.length-2].t)/DAY);if(gap>=5){const prev=gs.slice(0,-1),pa=prev.reduce((a,g)=>a+g.a,0)/prev.length;ins.push(PTX.ins.pause(gap,gs[gs.length-1].a.toFixed(1),pa.toFixed(1)))}}
+    const t7=Date.now()-7*DAY,a7=all.V.filter(v=>v.t>=t7),b7=all.V.filter(v=>v.t<t7),av=a=>{const d=a.reduce((x,v)=>x+v.d,0);return d?(a.reduce((x,v)=>x+v.s,0)/d*3).toFixed(1):'–'};
+    const card=(k,v,big)=>`<div class="pcard${big?' big':''}"><b>${v}</b><span>${esc(PTX[k])}</span></div>`;
+    const mxd=Math.max(1,...s.dist.map(d=>d[1]));
+    body=`<div class="phead"><b>${esc(pl.name)}</b>${last!==null?`<span class="note">${esc(PTX.lastPlay(last))}${a7.length&&b7.length?' · '+esc(PTX.vsBefore(av(a7),av(b7))):''}</span>`:''}
+      <span class="pact"><button type="button" class="tbtn" data-prn="${pl.id}">${esc(PTX.rename)}</button><button type="button" class="tbtn" data-pdel="${pl.id}">${esc(PTX.del)}</button></span></div>
+      <div class="pper" role="group" aria-label="${esc(PTX.period)}">${Object.entries(PTX.p).map(([k,l])=>`<button type="button" class="dchip${k===pPer?' on':''}" data-pper="${k}">${esc(l)}</button>`).join('')}</div>
+      ${!s.V.length?`<p class="note">${esc(PTX.noData)}</p>`:`
+      ${ins.length?`<ul class="pins">${ins.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`:''}
+      <div class="pgrid">${card('avg',fmt1(s.avg),1)}${card('f9',fmt1(s.f9),1)}${card('co',isFinite(s.co)?fmt1(s.co)+' %':'–',1)}${card('legs',s.legs,1)}
+      ${card('hiS',s.hiS||'–')}${card('hiCo',s.hiCo||'–')}${card('best',isFinite(s.best)?s.best+' '+PTX.darts:'–')}${card('dpl',fmt1(s.dpl))}
+      ${card('m180',s.m180)}${card('t140',s.t140)}${card('t100',s.t100)}${card('t60',s.t60)}
+      ${card('trV',s.trV)}${card('trR',isFinite(s.trR)?fmt1(s.trR)+' %':'–')}${card('favT',esc(s.favT))}${card('favD',esc(s.favD))}
+      ${card('visits',s.V.length)}${card('darts',s.D)}${card('busts',s.busts)}</div>
+      <p class="note">${esc(PTX.coNote)}</p>
+      <div class="pcols"><div><h3>${esc(PTX.trend)}</h3>${spark(all.games)||'<p class="note">–</p>'}</div>
+      <div><h3>${esc(PTX.dist)}</h3><div class="pdist">${s.dist.map(([l,n])=>`<div><span>${l}</span><i style="width:${n/mxd*100}%"></i><b>${n}</b></div>`).join('')}</div></div></div>`}
+      <h3>${esc(PTX.ach)}</h3><ul class="pach">${achieve(pView)}</ul>`;}
+  box.innerHTML=`<h2>${esc(PTX.title)}</h2><p class="note">${esc(PTX.intro)}</p>
+    <form class="trow" id="pNew"><input id="pNewN" maxlength="24" placeholder="${esc(PTX.namePh)}" aria-label="${esc(PTX.namePh)}" required><button class="btn-r" type="submit">${esc(PTX.create)}</button></form>
+    ${tabs?`<div class="ptabs">${tabs}</div>`:''}${body}
+    <p class="note pbak">${esc(PTX.backup)} <button type="button" class="tbtn" id="pExp">${esc(PTX.exp)}</button> <button type="button" class="tbtn" id="pImpB">${esc(PTX.imp)}</button><input type="file" id="pImp" accept="application/json,.json" hidden></p>`;
+};
+if($('pstats')&&PT){
+  $('pstats').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
+    if(d.pv){pView=d.pv;pRender();return}
+    if(d.pper){pPer=d.pper;pRender();return}
+    if(d.prn){const p=pById(d.prn);const n=prompt(PTX.askName,p.name);if(n&&n.trim()){p.name=n.trim().slice(0,24);psave();S.pids.forEach((id,i)=>{if(id===p.id)S.names[i]=p.name});render()}return}
+    if(d.pdel){const p=pById(d.pdel);if(p&&confirm(PTX.delQ(p.name))){PD.players=PD.players.filter(x=>x.id!==p.id);PD.visits=PD.visits.filter(v=>v.pid!==p.id);PD.legs=PD.legs.filter(l=>l.pid!==p.id);S.pids=S.pids.map(id=>id===p.id?null:id);psave();pView=null;render()}return}
+    if(b.id==='pImpB'){$('pImp').click();return}
+    if(b.id==='pExp'){const blob=new Blob([JSON.stringify(PD)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`darts-statistik-${new Date().toISOString().slice(0,10)}.json`;document.body.appendChild(a);a.click();a.remove();return}
+  });
+  $('pstats').addEventListener('submit',e=>{if(e.target.id!=='pNew')return;e.preventDefault();const id=newPlayer($('pNewN').value);if(!id)return;pView=id;
+    const free=S.pids.findIndex(x=>!x);if(free>=0){S.pids[free]=id;S.names[free]=pById(id).name}render()});
+  $('pstats').addEventListener('change',e=>{if(e.target.id!=='pImp'||!e.target.files[0])return;const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);if(!Array.isArray(x.players)||!Array.isArray(x.visits)||!Array.isArray(x.legs))throw 0;
+      const ids=new Set(PD.players.map(p=>p.id));x.players.forEach(p=>{if(!ids.has(p.id))PD.players.push(p)});const key=v=>v.pid+v.t+v.u;const have=new Set(PD.visits.map(key));x.visits.forEach(v=>{if(!have.has(key(v)))PD.visits.push(v)});const hl=new Set(PD.legs.map(key));x.legs.forEach(l=>{if(!hl.has(key(l)))PD.legs.push(l)});
+      PD.visits.sort((a,b)=>a.t-b.t);PD.legs.sort((a,b)=>a.t-b.t);psave();S.msg=PTX.impOk;render()}catch(err){S.msg=PTX.impBad;render()}};r.readAsText(e.target.files[0])});
+}
+
 const endVisit=()=>{S.visit=[];S.cur=nxt(S.cur)};
 const throwDart=(d,ev)=>{
-  snap();S.msg='';
+  snap();S.msg='';S.seq++;
   const p=S.cur,before=S.rest[p]-S.visit.reduce((a,x)=>a+x.v,0),after=before-d.v;
   S.visit.push(d);S.darts[p]++;
   if(after<0||after===1||(after===0&&d.k!=='d')){
     S.darts[p]+=3-S.visit.length;
     S.msg=`Bust! ${S.names[p]} bleibt auf ${S.rest[p]}.`;
+    recVisit(p,S.visit.slice(),0,3,S.rest[p],true,false);
     endVisit();
   }else if(after===0){
     const sum=S.visit.reduce((a,x)=>a+x.v,0);
     S.pts[p]+=sum;S.hiCo[p]=Math.max(S.hiCo[p],sum);S.legs[p]++;
     S.msg=`Game shot! ${S.names[p]} checkt ${sum} aus.`;
+    recVisit(p,S.visit.slice(),sum,S.visit.length,S.rest[p],false,true);recLeg(p);
     legWon();
   }else if(S.visit.length===3){
     const sum=S.visit.reduce((a,x)=>a+x.v,0);
+    recVisit(p,S.visit.slice(),sum,3,S.rest[p],false,false);
     S.pts[p]+=sum;S.rest[p]-=sum;if(sum===180){S.m180[p]++;S.msg='ONE HUNDRED AND EIGHTYYY!'}
     endVisit();
   }
@@ -155,10 +261,10 @@ const mark=ev=>{
 const quick=v=>{
   v=Math.round(v);if(!(v>=0&&v<=180)||[179,178,176,175,173,172,169,166,163].includes(v)){S.msg='Diese Aufnahme ist mit drei Darts nicht möglich.';render();return}
   if(S.visit.length){S.msg='Erst die angefangene Aufnahme beenden oder rückgängig machen.';render();return}
-  snap();const p=S.cur,after=S.rest[p]-v;S.darts[p]+=3;S.msg='';
-  if(after<0||after===1||(after===0&&!suggest(S.rest[p]))){S.msg=`Bust! ${S.names[p]} bleibt auf ${S.rest[p]}.`;S.cur=nxt(p)}
-  else if(after===0){S.pts[p]+=v;S.hiCo[p]=Math.max(S.hiCo[p],v);S.legs[p]++;S.msg=`Game shot! ${S.names[p]} checkt ${v} aus.`;legWon()}
-  else{S.pts[p]+=v;S.rest[p]=after;if(v===180){S.m180[p]++;S.msg='ONE HUNDRED AND EIGHTYYY!'}S.cur=nxt(p)}
+  snap();S.seq++;const p=S.cur,after=S.rest[p]-v;S.darts[p]+=3;S.msg='';
+  if(after<0||after===1||(after===0&&!suggest(S.rest[p]))){S.msg=`Bust! ${S.names[p]} bleibt auf ${S.rest[p]}.`;recVisit(p,null,0,3,S.rest[p],true,false);S.cur=nxt(p)}
+  else if(after===0){recVisit(p,null,v,3,S.rest[p],false,true);recLeg(p);S.pts[p]+=v;S.hiCo[p]=Math.max(S.hiCo[p],v);S.legs[p]++;S.msg=`Game shot! ${S.names[p]} checkt ${v} aus.`;legWon()}
+  else{recVisit(p,null,v,3,S.rest[p],false,false);S.pts[p]+=v;S.rest[p]=after;if(v===180){S.m180[p]++;S.msg='ONE HUNDRED AND EIGHTYYY!'}S.cur=nxt(p)}
   render();
 };
 
@@ -192,7 +298,7 @@ const render=()=>{
   $('players').innerHTML=S.names.map((_,p)=>{
     const rest=S.rest[p]-(p===S.cur?live:0),avg=S.darts[p]?(S.pts[p]/S.darts[p]*3).toFixed(1):'–';
     return`<div class="pl ${p===S.cur?'on':''}"><span class="legs" title="Gewonnene Legs">${S.legs[p]}</span>
-      <input data-p="${p}" value="${esc(S.names[p])}" aria-label="Name Spieler ${p+1}" maxlength="24">
+      <input data-p="${p}" value="${esc(S.names[p])}" aria-label="Name Spieler ${p+1}" maxlength="24">${PT?pSelect(p):''}
       <div class="rest">${rest}</div>
       <div class="stats"><span>Average<b>${avg}</b></span><span>180er<b>${S.m180[p]}</b></span><span>Top-Finish<b>${S.hiCo[p]||'–'}</b></span></div></div>`;
   }).join('');
@@ -204,16 +310,18 @@ const render=()=>{
   $('msg').textContent=S.msg||'';
   $('start').value=String(S.start);
   if($('pcount'))$('pcount').value=String(N());
-  save();
+  save();pRender();
 };
 
 $('board').addEventListener('click',e=>{const t=e.target.closest('.seg');if(t)throwDart({v:+t.dataset.v,l:t.dataset.l,k:t.dataset.k},e)});
 $('miss').addEventListener('click',()=>throwDart({v:0,l:'0',k:'s'}));
-$('undo').addEventListener('click',()=>{if(hist.length){S=JSON.parse(hist.pop());S.msg='Letzte Eingabe zurückgenommen.';render()}});
-$('newleg').addEventListener('click',()=>{snap();S=fresh(S.start,S.names);S.msg='Neues Spiel – Game on!';render()});
-$('start').addEventListener('change',e=>{snap();S=fresh(+e.target.value,S.names);render()});
-if($('pcount'))$('pcount').addEventListener('change',e=>{const n=+e.target.value;if(n>=1&&n<=4){snap();const names=defNames(n).map((d,i)=>S.names[i]||d);S=fresh(S.start,names);S.msg=n===1?'Training: allein gegen die Uhr.':`Neues Spiel mit ${n} Spielern.`;render()}});
-$('players').addEventListener('change',e=>{const p=e.target.dataset.p;if(p!==undefined){S.names[+p]=e.target.value.trim()||`Spieler ${+p+1}`;render()}});
+$('undo').addEventListener('click',()=>{if(hist.length){S=JSON.parse(hist.pop());pUndo();S.msg='Letzte Eingabe zurückgenommen.';render()}});
+$('newleg').addEventListener('click',()=>{snap();S=fresh(S.start,S.names,S.pids);S.msg='Neues Spiel – Game on!';render()});
+$('start').addEventListener('change',e=>{snap();S=fresh(+e.target.value,S.names,S.pids);render()});
+if($('pcount'))$('pcount').addEventListener('change',e=>{const n=+e.target.value;if(n>=1&&n<=4){snap();const names=defNames(n).map((d,i)=>S.names[i]||d);S=fresh(S.start,names,S.pids);S.msg=n===1?'Training: allein gegen die Uhr.':`Neues Spiel mit ${n} Spielern.`;render()}});
+$('players').addEventListener('change',e=>{const pp=e.target.dataset.pp;if(pp!==undefined){const i=+pp;let id=e.target.value;if(id==='__new'){id=newPlayer(prompt(PTX.askName,S.names[i].startsWith('Spieler ')?'':S.names[i]))||null}
+    if(id&&S.pids.some((x,j)=>x===id&&j!==i)){id=null}S.pids[i]=id;if(id){S.names[i]=pById(id).name;pView=id}render();return}
+  const p=e.target.dataset.p;if(p!==undefined){S.names[+p]=e.target.value.trim()||`Spieler ${+p+1}`;render()}});
 $('quick').addEventListener('submit',e=>{e.preventDefault();const v=$('qv').value;if(v!==''){quick(+v);$('qv').value=''}});
 render();}
 

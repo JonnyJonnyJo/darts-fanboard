@@ -425,3 +425,33 @@ nav .links a.navlive::before{content:"";display:inline-block;width:8px;height:8p
 @media(min-width:1200px){nav .links a{padding:10px 8px;font-size:15px}nav .wrap{gap:12px}nav .links a[href$="#geschichte"],nav .links a[href$="#turniere"]{display:none}}
 .kt-remind{display:flex;gap:10px;align-items:flex-start;margin-top:12px;font-size:15px;cursor:pointer}
 .kt-remind input{width:20px;height:20px;flex:none;margin-top:1px;accent-color:var(--red)}
+
+/* Spieler-Profile & Statistik im Punkte-Rechner */
+.pprof{display:block;width:100%;margin:6px 0 2px;font-size:13px;font-weight:600;padding:5px 8px;border-radius:8px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.2);color:inherit}
+.pprof option{color:#111}
+.pstats{margin-top:34px;padding-top:26px;border-top:1px solid rgba(255,255,255,.2)}
+.pstats h3{font-family:Oswald,sans-serif;font-size:18px;margin:22px 0 10px;text-transform:uppercase}
+.pstats .trow{margin:14px 0}
+.ptabs,.pper{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.phead{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin:16px 0 4px}
+.phead>b{font-family:Oswald,sans-serif;font-size:26px}
+.pact{margin-left:auto;display:flex;gap:6px}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:14px 0 6px}
+.pcard{border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:12px 14px;background:rgba(255,255,255,.07);color:inherit;display:flex;flex-direction:column-reverse;gap:4px}
+.pcard span{font-size:13px;opacity:.8}
+.pcard b{font-family:Oswald,sans-serif;font-size:22px;line-height:1.1;overflow-wrap:anywhere}
+.pcard.big{background:rgba(0,0,0,.22);border-color:var(--gold,#f3c63f)}
+.pcard.big b{color:var(--gold,#f3c63f);font-size:32px}
+.pcard.big span{color:rgba(255,255,255,.85)}
+.pins{list-style:none;padding:0;margin:12px 0;display:grid;gap:8px}
+.pins li{padding:10px 14px;border-left:4px solid var(--red);background:rgba(255,255,255,.08);border-radius:0 10px 10px 0}
+.pcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px 28px}
+.pspark{width:100%;max-width:420px;height:auto}
+.pdist div{display:grid;grid-template-columns:70px 1fr 36px;align-items:center;gap:8px;font-size:13px;margin:4px 0}
+.pdist i{display:block;height:12px;border-radius:6px;background:var(--red);min-width:2px}
+.pdist b{text-align:right}
+.pach{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.pach li{padding:6px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.25);font-size:14px;opacity:.55}
+.pach li.ok{opacity:1;border-color:var(--gold,#f3c63f);font-weight:700}
+.pbak{margin-top:22px}
+.pstats .dchip.on{background:var(--red);border-color:var(--red);color:#fff}
