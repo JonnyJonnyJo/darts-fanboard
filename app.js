@@ -1,4 +1,4 @@
-/* Darts aktuell – Seitenlogik (Countdown, Spielplan, Checkout-Rechner, Weltmeister, Scorer) */
+/* Darts aktuell – Seitenlogik (Countdown, Spielplan, Checkout-Rechner, Weltmeister, Punkte-Rechner) */
 new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true});
 {
 const $=id=>document.getElementById(id);
@@ -111,22 +111,24 @@ svg+=`<circle class="seg" r="16" fill="#1d8a4b" data-v="25" data-l="25" data-k="
 <circle r="226" fill="url(#shine)" pointer-events="none"/><g id="marks" pointer-events="none"></g>`;
 $('board').innerHTML=svg;
 
-/* ---------- Scorer ---------- */
+/* ---------- Scorer (1–4 Spieler) ---------- */
 const KEY='allyPallyScorer1';
-const fresh=(start=501,names=['Spieler 1','Spieler 2'])=>({start,names,rest:[start,start],legs:[0,0],cur:0,starter:0,visit:[],pts:[0,0],darts:[0,0],m180:[0,0],hiCo:[0,0],msg:''});
+const defNames=n=>Array.from({length:n},(_,i)=>`Spieler ${i+1}`);
+const fresh=(start=501,names=defNames(2))=>{const n=names.length,z=()=>Array(n).fill(0);return{start,names,rest:Array(n).fill(start),legs:z(),cur:0,starter:0,visit:[],pts:z(),darts:z(),m180:z(),hiCo:z(),msg:''}};
 let S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}
-if(!S||!Array.isArray(S.rest))S=fresh();
+if(!S||!Array.isArray(S.rest)||!Array.isArray(S.names)||S.rest.length!==S.names.length||S.names.length<1||S.names.length>4)S=fresh();
+const N=()=>S.names.length,nxt=i=>(i+1)%N();
 const hist=[];
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 const snap=()=>{hist.push(JSON.stringify(S));if(hist.length>300)hist.shift()};
+const legWon=()=>{S.starter=nxt(S.starter);S.rest=Array(N()).fill(S.start);S.visit=[];S.cur=S.starter};
 
-const endVisit=()=>{S.visit=[];S.cur=1-S.cur};
+const endVisit=()=>{S.visit=[];S.cur=nxt(S.cur)};
 const throwDart=(d,ev)=>{
   snap();S.msg='';
   const p=S.cur,before=S.rest[p]-S.visit.reduce((a,x)=>a+x.v,0),after=before-d.v;
   S.visit.push(d);S.darts[p]++;
   if(after<0||after===1||(after===0&&d.k!=='d')){
-    const lost=S.visit.reduce((a,x)=>a+x.v,0)-d.v;
     S.darts[p]+=3-S.visit.length;
     S.msg=`Bust! ${S.names[p]} bleibt auf ${S.rest[p]}.`;
     endVisit();
@@ -134,7 +136,7 @@ const throwDart=(d,ev)=>{
     const sum=S.visit.reduce((a,x)=>a+x.v,0);
     S.pts[p]+=sum;S.hiCo[p]=Math.max(S.hiCo[p],sum);S.legs[p]++;
     S.msg=`Game shot! ${S.names[p]} checkt ${sum} aus.`;
-    S.starter=1-S.starter;S.rest=[S.start,S.start];S.visit=[];S.cur=S.starter;
+    legWon();
   }else if(S.visit.length===3){
     const sum=S.visit.reduce((a,x)=>a+x.v,0);
     S.pts[p]+=sum;S.rest[p]-=sum;if(sum===180){S.m180[p]++;S.msg='ONE HUNDRED AND EIGHTYYY!'}
@@ -154,15 +156,39 @@ const quick=v=>{
   v=Math.round(v);if(!(v>=0&&v<=180)||[179,178,176,175,173,172,169,166,163].includes(v)){S.msg='Diese Aufnahme ist mit drei Darts nicht möglich.';render();return}
   if(S.visit.length){S.msg='Erst die angefangene Aufnahme beenden oder rückgängig machen.';render();return}
   snap();const p=S.cur,after=S.rest[p]-v;S.darts[p]+=3;S.msg='';
-  if(after<0||after===1||(after===0&&!suggest(S.rest[p]))){S.msg=`Bust! ${S.names[p]} bleibt auf ${S.rest[p]}.`;S.cur=1-p}
-  else if(after===0){S.pts[p]+=v;S.hiCo[p]=Math.max(S.hiCo[p],v);S.legs[p]++;S.msg=`Game shot! ${S.names[p]} checkt ${v} aus.`;S.starter=1-S.starter;S.rest=[S.start,S.start];S.cur=S.starter}
-  else{S.pts[p]+=v;S.rest[p]=after;if(v===180){S.m180[p]++;S.msg='ONE HUNDRED AND EIGHTYYY!'}S.cur=1-p}
+  if(after<0||after===1||(after===0&&!suggest(S.rest[p]))){S.msg=`Bust! ${S.names[p]} bleibt auf ${S.rest[p]}.`;S.cur=nxt(p)}
+  else if(after===0){S.pts[p]+=v;S.hiCo[p]=Math.max(S.hiCo[p],v);S.legs[p]++;S.msg=`Game shot! ${S.names[p]} checkt ${v} aus.`;legWon()}
+  else{S.pts[p]+=v;S.rest[p]=after;if(v===180){S.m180[p]++;S.msg='ONE HUNDRED AND EIGHTYYY!'}S.cur=nxt(p)}
   render();
 };
 
+/* Zahlenfeld unter dem Board: Double/Triple wählen, dann Zahl antippen */
+let mult=1;
+const pad=$('pad');
+const drawPad=()=>{
+  if(!pad)return;
+  const nums=[...Array(20)].map((_,i)=>i+1);
+  pad.innerHTML=`<div class="padmod"><button type="button" data-m="2" class="${mult===2?'on':''}" aria-pressed="${mult===2}">Double</button><button type="button" data-m="3" class="${mult===3?'on':''}" aria-pressed="${mult===3}">Triple</button></div>
+  <div class="padnums">${nums.map(n=>`<button type="button" data-n="${n}">${mult===2?'D':mult===3?'T':''}${n}</button>`).join('')}<button type="button" data-n="25" ${mult===3?'disabled':''}>${mult===2?'Bull':'25'}</button><button type="button" data-n="0">0</button></div>`;
+};
+if(pad){
+  pad.addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!b||b.disabled)return;
+    if(b.dataset.m){const m=+b.dataset.m;mult=mult===m?1:m;drawPad();return}
+    const n=+b.dataset.n;
+    let d;
+    if(n===0)d={v:0,l:'0',k:'s'};
+    else if(n===25)d=mult===2?{v:50,l:'Bull',k:'d'}:{v:25,l:'25',k:'s'};
+    else d={v:n*mult,l:(mult===2?'D':mult===3?'T':'')+n,k:mult===2?'d':mult===3?'t':'s'};
+    mult=1;drawPad();throwDart(d);
+  });
+  drawPad();
+}
+
 const render=()=>{
   const live=S.visit.reduce((a,x)=>a+x.v,0);
-  $('players').innerHTML=[0,1].map(p=>{
+  $('players').className='players n'+N();
+  $('players').innerHTML=S.names.map((_,p)=>{
     const rest=S.rest[p]-(p===S.cur?live:0),avg=S.darts[p]?(S.pts[p]/S.darts[p]*3).toFixed(1):'–';
     return`<div class="pl ${p===S.cur?'on':''}"><span class="legs" title="Gewonnene Legs">${S.legs[p]}</span>
       <input data-p="${p}" value="${esc(S.names[p])}" aria-label="Name Spieler ${p+1}" maxlength="24">
@@ -176,6 +202,7 @@ const render=()=>{
   $('sug').innerHTML=sg?`Finish-Weg: ${sg.map(d=>`<b>${d.l}</b>`).join('')}`:(rem<=170&&rem>1?'Kein Finish mit den restlichen Darts – gut stellen.':'');
   $('msg').textContent=S.msg||'';
   $('start').value=String(S.start);
+  if($('pcount'))$('pcount').value=String(N());
   save();
 };
 
@@ -184,6 +211,7 @@ $('miss').addEventListener('click',()=>throwDart({v:0,l:'0',k:'s'}));
 $('undo').addEventListener('click',()=>{if(hist.length){S=JSON.parse(hist.pop());S.msg='Letzte Eingabe zurückgenommen.';render()}});
 $('newleg').addEventListener('click',()=>{snap();S=fresh(S.start,S.names);S.msg='Neues Spiel – Game on!';render()});
 $('start').addEventListener('change',e=>{snap();S=fresh(+e.target.value,S.names);render()});
+if($('pcount'))$('pcount').addEventListener('change',e=>{const n=+e.target.value;if(n>=1&&n<=4){snap();const names=defNames(n).map((d,i)=>S.names[i]||d);S=fresh(S.start,names);S.msg=n===1?'Training: allein gegen die Uhr.':`Neues Spiel mit ${n} Spielern.`;render()}});
 $('players').addEventListener('change',e=>{const p=e.target.dataset.p;if(p!==undefined){S.names[+p]=e.target.value.trim()||`Spieler ${+p+1}`;render()}});
 $('quick').addEventListener('submit',e=>{e.preventDefault();const v=$('qv').value;if(v!==''){quick(+v);$('qv').value=''}});
 render();}

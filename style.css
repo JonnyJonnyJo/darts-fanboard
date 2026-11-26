@@ -201,6 +201,20 @@ footer{background:var(--night);color:var(--nsoft);font-size:14px}
 footer a{color:var(--nink)}
 footer ul{margin:8px 0 0;padding-left:18px}
 
+.pad{margin-top:14px;display:grid;gap:8px;max-width:620px;margin-inline:auto}
+.padmod{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.padnums{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.pad button{font:700 17px/1 Oswald,Impact,sans-serif;min-height:44px;border-radius:10px;border:1px solid var(--edge);background:var(--night2);color:var(--nink);cursor:pointer;font-variant-numeric:tabular-nums}
+.pad button:hover{border-color:var(--gold)}
+.pad button:active{transform:translateY(1px)}
+.pad button:disabled{opacity:.35;cursor:not-allowed}
+.padmod button{background:var(--deep)}
+.padmod button[data-m="2"].on{background:var(--red);border-color:var(--red);color:#fff}
+.padmod button[data-m="3"].on{background:#1d8a4b;border-color:#1d8a4b;color:#fff}
+.players.n1{grid-template-columns:minmax(0,1fr)}
+.players.n3 .pl .rest,.players.n4 .pl .rest{font-size:clamp(40px,5vw,60px)}
+.players.n3 .pl,.players.n4 .pl{padding:10px 12px}
+.players.n3 .stats,.players.n4 .stats{font-size:12px}
 @media(max-width:900px){.play,.co,.champ{grid-template-columns:minmax(0,1fr)}.facts{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){
   table{font-size:13px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px}.stack td{display:flow-root;border:0;padding:3px 0;padding-inline-start:8em;text-align:start}.stack td::before{content:attr(data-l);float:inline-start;width:7.5em;margin-inline-start:-8em;white-space:normal;color:var(--soft);font-weight:500}.stack td:empty{display:none}
@@ -338,3 +352,11 @@ nav.crumbs{position:static;z-index:auto;background:none;border:0;color:inherit;f
 .oom tr.de td{background:light-dark(#fff6d6,#3a3418)}
 .flag{display:inline-block;font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;background:#000;color:#ffce00;vertical-align:middle}
 .oom-de{margin:6px 0 0}
+/* Punkte-Rechner auf dem Handy: Spielstand oben, dann Board und Zahlenfeld */
+@media(max-width:900px){
+  .play>div:first-child,.play>.tafel{display:contents}
+  .play #players{order:1}.play .tafel>.visit:nth-child(2){order:2}
+  .play .boardbox{order:3}.play .boardctl{order:4;margin-top:0}.play .pad{order:5;margin-top:0;width:100%}
+  .play .tafel>.visit:last-child{order:6}
+  .stats{font-size:11px}.stats b{font-size:15px}
+}

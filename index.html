@@ -112,7 +112,7 @@
   <div class="top">
     <div>
       <h2>Selbst werfen</h2>
-      <p>Punkte-Rechner fürs eigene Board: aufs Feld klicken, Rest und Average laufen mit, der Finish-Weg wird vorgeschlagen.</p>
+      <p>Punkte-Rechner fürs eigene Board, für 1 bis 4 Spieler: aufs Feld klicken oder die Zahl antippen, Rest und Average laufen mit, der Finish-Weg wird vorgeschlagen.</p>
     </div>
   </div>
 
@@ -124,6 +124,7 @@
         <button class="btn-d" id="undo">Rückgängig</button>
         <button class="btn-d" id="newleg">Neues Spiel</button>
       </div>
+      <div class="pad" id="pad" role="group" aria-label="Wurf per Zahl eingeben"></div>
     </div>
 
     <div class="tafel">
@@ -141,9 +142,11 @@
           <button class="btn-r" type="submit">Eintragen</button>
         </form>
         <div class="row">
+          <label for="pcount">Spieler</label>
+          <select id="pcount"><option value="1">1 (Training)</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select>
           <label for="start">Modus</label>
           <select id="start"><option value="501">501 Double-Out</option><option value="301">301 Double-Out</option><option value="701">701 Double-Out</option></select>
-          <span class="note">Board anklicken: äußerer Ring = Double, innerer Ring = Treble. Spielstand bleibt in deinem Browser gespeichert.</span>
+          <span class="note">Board anklicken (äußerer Ring = Double, innerer Ring = Treble) oder unter dem Board erst Double/Triple und dann die Zahl tippen. Spielstand bleibt in deinem Browser gespeichert.</span>
         </div>
       </div>
     </div>
