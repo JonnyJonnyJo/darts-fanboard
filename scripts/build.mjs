@@ -2,7 +2,7 @@
 //  - kopiert die statischen Dateien
 //  - holt News, Termine und WM-Paarungen aus Supabase (öffentlicher Lesezugriff, anon-Key aus config.js)
 //    und schreibt sie fest ins HTML, damit Google sie ohne JavaScript lesen kann
-//  - erzeugt Unterseiten (News-Artikel, Spielplan, Tippspiel, Scorer, Checkout-Rechner), sitemap.xml und robots.txt
+//  - erzeugt Unterseiten (News-Artikel, Spielplan, Tippspiel, Punkte-Rechner, Checkout-Rechner), sitemap.xml und robots.txt
 // Aufruf: node scripts/build.mjs
 import fs from 'node:fs';
 import path from 'node:path';
@@ -273,15 +273,17 @@ write('darts-tippspiel/index.html', page(
 pages.push({ url: '/darts-tippspiel/', pri: '0.8', freq: 'daily' });
 
 // Scorer
-write('darts-scorer/index.html', page(
-  { title: 'Darts-Scorer online: 501 & 301 zählen mit Checkout-Hilfe | Darts aktuell', desc: 'Kostenloser Darts-Scorer im Browser: 501 oder 301 für zwei Spieler zählen, Würfe direkt auf der Scheibe antippen, mit Average und Checkout-Vorschlägen. Ohne Anmeldung.', url: '/darts-scorer/',
-    ld: [crumbs([['Darts aktuell', '/'], ['Darts-Scorer', '/darts-scorer/']]),
-      { '@context': 'https://schema.org', '@type': 'WebApplication', name: 'Darts-Scorer', url: SITE + '/darts-scorer/', applicationCategory: 'SportsApplication', operatingSystem: 'Browser', inLanguage: 'de-DE', offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' } }] },
-  intro('Darts-Scorer <span>online</span>', 'Zähl deine Legs direkt im Browser: Spielmodus wählen, Würfe auf der Scheibe antippen – Rest, Average und der passende Checkout werden automatisch angezeigt.', crumbNav([['Startseite', '/'], ['Darts-Scorer', '/darts-scorer/']]), ['/darts-scorer/', 'Kostenloser Darts-Scorer fürs Handy: 501/301 zählen mit Checkout-Hilfe 🎯'])
+write('darts-punkte-rechner/index.html', page(
+  { title: 'Darts Punkte-Rechner online: 501 & 301 zählen mit Checkout-Hilfe | Darts aktuell', desc: 'Kostenloser Darts Punkte-Rechner (Scorer) im Browser: 501 oder 301 für zwei Spieler zählen, Würfe direkt auf der Scheibe antippen, mit Average und Checkout-Vorschlägen. Ohne Anmeldung.', url: '/darts-punkte-rechner/',
+    ld: [crumbs([['Darts aktuell', '/'], ['Punkte-Rechner', '/darts-punkte-rechner/']]),
+      { '@context': 'https://schema.org', '@type': 'WebApplication', name: 'Darts Punkte-Rechner', url: SITE + '/darts-punkte-rechner/', applicationCategory: 'SportsApplication', operatingSystem: 'Browser', inLanguage: 'de-DE', offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' } }] },
+  intro('Darts Punkte-Rechner <span>online</span>', 'Zähl deine Legs direkt im Browser: Spielmodus wählen, Würfe auf der Scheibe antippen – Rest, Average und der passende Checkout werden automatisch angezeigt.', crumbNav([['Startseite', '/'], ['Punkte-Rechner', '/darts-punkte-rechner/']]), ['/darts-punkte-rechner/', 'Kostenloser Darts Punkte-Rechner fürs Handy: 501/301 zählen mit Checkout-Hilfe 🎯'])
   + section('spiel'),
   ['app']
 ));
-pages.push({ url: '/darts-scorer/', pri: '0.8', freq: 'monthly' });
+// alte Adresse leitet weiter
+write('darts-scorer/index.html', '<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Weitergeleitet – Punkte-Rechner | Darts aktuell</title><meta name="robots" content="noindex"><link rel="canonical" href="https://dartsaktuell.com/darts-punkte-rechner/"><meta http-equiv="refresh" content="0; url=/darts-punkte-rechner/"><script>location.replace(\'/darts-punkte-rechner/\'+location.search+location.hash)</script></head><body><p><a href="/darts-punkte-rechner/">Zum Punkte-Rechner</a></p></body></html>');
+pages.push({ url: '/darts-punkte-rechner/', pri: '0.8', freq: 'monthly' });
 
 // Checkout-Rechner + feste Tabelle 2–170 (gleicher Algorithmus wie app.js)
 const appSrc = rd('app.js');
