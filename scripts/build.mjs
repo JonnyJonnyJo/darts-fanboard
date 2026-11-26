@@ -164,7 +164,11 @@ for (const f of ['style.css', 'app.js', 'news.js', 'tippspiel.js', 'config.js'])
   const p = path.join(ROOT, f);
   if (fs.existsSync(p)) VER[f] = crypto.createHash('sha1').update(fs.readFileSync(p)).digest('hex').slice(0, 8);
 }
+// Eigene, datensparsame Besucherzählung (keine Cookies, keine IP-Speicherung) – zählt nur echte Besuche auf dartsaktuell.com
+fs.writeFileSync(path.join(OUT, 'track.js'), `(function(){try{if(location.hostname!=='dartsaktuell.com'||navigator.webdriver)return;var r='';try{r=document.referrer?new URL(document.referrer).hostname.replace(/^www\\./,''):''}catch(e){}fetch(${JSON.stringify(URL_ + '/rest/v1/rpc/track_view')},{method:'POST',keepalive:true,headers:{'Content-Type':'application/json',apikey:${JSON.stringify(KEY)},Authorization:'Bearer '+${JSON.stringify(KEY)}},body:JSON.stringify({p_path:location.pathname,p_ref:r})}).catch(function(){})}catch(e){}})();\n`);
+VER['track.js'] = crypto.createHash('sha1').update(fs.readFileSync(path.join(OUT, 'track.js'))).digest('hex').slice(0, 8);
 const localize = html => {
+  if (!html.includes('/track.js') && !/<title>Admin/i.test(html) && !html.includes('id="admin')) html = html.replace('</head>', '<script defer src="/track.js"></script>\n</head>');
   html = html.split(CDN_SB).join(SB_SRC);
   for (const [f, v] of Object.entries(VER)) html = html.split(`"/${f}"`).join(`"/${f}?v=${v}"`);
   return html;
