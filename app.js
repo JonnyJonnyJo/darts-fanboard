@@ -169,11 +169,12 @@ const drawPad=()=>{
   if(!pad)return;
   const nums=[...Array(20)].map((_,i)=>i+1);
   pad.innerHTML=`<div class="padmod"><button type="button" data-m="2" class="${mult===2?'on':''}" aria-pressed="${mult===2}">Double</button><button type="button" data-m="3" class="${mult===3?'on':''}" aria-pressed="${mult===3}">Triple</button></div>
-  <div class="padnums">${nums.map(n=>`<button type="button" data-n="${n}">${mult===2?'D':mult===3?'T':''}${n}</button>`).join('')}<button type="button" data-n="25" ${mult===3?'disabled':''}>${mult===2?'Bull':'25'}</button><button type="button" data-n="0">0</button></div>`;
+  <div class="padnums">${nums.map(n=>`<button type="button" data-n="${n}">${mult===2?'D':mult===3?'T':''}${n}</button>`).join('')}<button type="button" data-n="25" ${mult===3?'disabled':''}>${mult===2?'Bull':'25'}</button><button type="button" data-n="0">0</button><button type="button" class="padact" data-act="undo">Zurück</button><button type="button" class="padact" data-act="new">Neues Spiel</button></div>`;
 };
 if(pad){
   pad.addEventListener('click',e=>{
     const b=e.target.closest('button');if(!b||b.disabled)return;
+    if(b.dataset.act){$(b.dataset.act==='undo'?'undo':'newleg').click();return}
     if(b.dataset.m){const m=+b.dataset.m;mult=mult===m?1:m;drawPad();return}
     const n=+b.dataset.n;
     let d;
