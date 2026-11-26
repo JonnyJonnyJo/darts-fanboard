@@ -32,7 +32,7 @@
 <nav><div class="wrap">
   <a class="logo" href="/" aria-label="Darts aktuell – Startseite"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="12" fill="#0b4426"/><circle cx="13" cy="13" r="8" fill="#efe3c4"/><circle cx="13" cy="13" r="4" fill="#e1262f"/></svg>Darts <span style="color:var(--gold)">aktuell</span></a>
   <button type="button" class="burger" aria-label="Menü öffnen" aria-expanded="false" aria-controls="menu" onclick="var o=document.body.classList.toggle('menu-open');this.setAttribute('aria-expanded',o);this.setAttribute('aria-label',o?'Menü schließen':'Menü öffnen')"><span></span><span></span><span></span></button>
-  <div class="links" id="menu" onclick="if(event.target.closest('a')){document.body.classList.remove('menu-open');var b=document.querySelector('.burger');b.setAttribute('aria-expanded','false');b.setAttribute('aria-label','Menü öffnen')}"><a href="/news/">News</a><a href="/#turniere">Turniere</a><a href="/darts-wm-spielplan/">WM-Spielplan</a><a href="/darts-tippspiel/">Tippspiel</a><a href="/darts-scorer/">Scorer</a><a href="/checkout-rechner/">Checkout</a><a href="/#geschichte">Weltmeister</a></div>
+  <div class="links" id="menu" onclick="if(event.target.closest('a')){document.body.classList.remove('menu-open');var b=document.querySelector('.burger');b.setAttribute('aria-expanded','false');b.setAttribute('aria-label','Menü öffnen')}"><a href="/news/">News</a><a href="/#turniere">Turniere</a><a href="/darts-wm-spielplan/">WM-Spielplan</a><a href="/darts-tippspiel/">Tippspiel</a><a href="/darts-scorer/">Scorer</a><a href="/checkout-rechner/">Checkout</a><a href="/pdc-weltrangliste/">Weltrangliste</a><a href="/#geschichte">Weltmeister</a></div>
 </div></nav>
 
 <section class="hero band" id="news"><div class="wrap">
@@ -63,6 +63,11 @@
 </div></section>
 
 <section class="band promo-band"><div class="wrap"><aside class="promo"><div><b>🎯 WM-Tippspiel: Mach deine eigene Tipprunde auf</b><span>Für Dartclub, Kumpels oder Familie – kostenlos, in einer Minute erstellt, Link per WhatsApp teilen. Eigene Tabelle und Tippübersicht wie bei Kicktipp.</span></div><a class="btn-r" href="/darts-tippspiel/#runden">Tipprunde erstellen</a></aside></div></section>
+<section class="band" id="rangliste"><div class="wrap">
+  <div class="trow" style="justify-content:space-between;align-items:baseline"><h2>Darts-Weltrangliste</h2><a href="/pdc-weltrangliste/">Alle 128 Spieler →</a></div>
+  <p class="note" style="color:var(--soft)"><!--PRERENDER:oomstand--> · PDC Order of Merit nach Preisgeld</p>
+  <div class="oom-wrap"><table class="oom"><thead><tr><th class="r">Platz</th><th></th><th>Spieler</th><th class="r">Preisgeld</th></tr></thead><tbody id="oomTop"><!--PRERENDER:oom--></tbody></table></div>
+</div></section>
 <section class="band" id="turniere"><div class="wrap">
   <h2>Turnierkalender</h2>
   <p style="color:var(--soft);max-width:70ch;margin:8px 0 0">Die nächsten großen PDC-Turniere und wer 2026 die Titel geholt hat.</p>

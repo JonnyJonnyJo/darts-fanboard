@@ -327,3 +327,14 @@ nav.crumbs{position:static;z-index:auto;background:none;border:0;color:inherit;f
 .promo span{color:light-dark(#4b5b52,#c9d6cd)}
 .promo .btn-r{flex:none;display:inline-flex;align-items:center;min-height:46px;padding:0 22px;border-radius:999px;background:var(--red);color:#fff;text-decoration:none;font-weight:700}
 .promo-band{padding-top:0;padding-bottom:0}
+
+/* Weltrangliste */
+.oom-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin:12px 0}
+.oom{width:100%;border-collapse:collapse;font-size:15px}
+.oom th{background:light-dark(#f3efe2,#1d2f23);text-align:left;font-size:13px;padding:8px 10px}
+.oom td{padding:8px 10px;border-top:1px solid var(--line)}
+.oom .r{text-align:right}
+.oom .mv{width:38px;font-size:12px;font-weight:700}
+.oom tr.de td{background:light-dark(#fff6d6,#3a3418)}
+.flag{display:inline-block;font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;background:#000;color:#ffce00;vertical-align:middle}
+.oom-de{margin:6px 0 0}

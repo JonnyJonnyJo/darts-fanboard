@@ -28,6 +28,17 @@
     return lead ? `${meta}<h2>${link(n)}</h2><p>${esc(n.teaser)}</p>${src}`
                 : `<article class="ncard">${meta}<h3>${link(n)}</h3><p>${esc(n.teaser)}</p>${src}</article>`;
   }
+  // Weltrangliste live nachladen (Startseite: Top 10, Ranglisten-Seite: alle)
+  async function renderOOM() {
+    const top = $('oomTop'), all = $('oomBody');
+    if (!sb || (!top && !all)) return;
+    const { data, error } = await sb.from('order_of_merit').select('*').order('rank').order('player').limit(all ? 200 : 10);
+    if (error || !data || !data.length) return;
+    const money = k => '£' + Math.round(Number(k) * 1000).toLocaleString('de-DE');
+    const row = r => { const mv = r.prev_rank ? r.prev_rank - r.rank : 0;
+      return `<tr${r.country === 'de' ? ' class="de"' : ''}><td class="r"><b>${r.rank}</b></td><td class="mv">${mv > 0 ? `<span class="up">▲${mv}</span>` : mv < 0 ? `<span class="down">▼${-mv}</span>` : ''}</td><td>${esc(r.player)}${r.country === 'de' ? ' <span class="flag" title="Deutschland">DE</span>' : ''}</td><td class="r">${money(r.prize_k)}</td></tr>`; };
+    (all || top).innerHTML = data.map(row).join('');
+  }
   function renderNews() {
     if (!$('newsLead')) return;
     const all = [...fileNews].sort((a, b) => String(b.date).localeCompare(String(a.date)));
@@ -109,6 +120,7 @@
     return { news: n.items || [], events: e.upcoming || [], winners: e.winners || [], matches: m.matches || [], updated: n.updated };
   };
   const refresh = async (first) => {
+    renderOOM().catch(() => {});
     let d = null;
     if (sb) { try { d = await fromDb(); } catch (err) { d = null; } }
     if (!d && first) { try { d = await fromFiles(); } catch (err) { d = null; } }
