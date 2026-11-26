@@ -468,3 +468,7 @@ nav .links a.navlive::before{content:"";display:inline-block;width:8px;height:8p
 .pbtn.ghost{background:transparent;color:inherit;border-color:rgba(255,255,255,.55)}
 .pbtn.ghost:hover{border-color:#fff}
 @media(max-width:700px){.pbak{grid-template-columns:1fr;padding:16px}.pbak-ico{display:none}.pbak-btns{flex-direction:column}.pbak-btns .pbtn{width:100%}}
+.pper .dchip.pgame{display:inline-flex;flex-direction:column;align-items:flex-start;line-height:1.15}
+.pper .dchip small{display:block;font-size:11px;font-weight:500;opacity:.75;margin-top:2px}
+.psum{margin:2px 0 0;font-weight:700}
+.psame{margin-top:4px}
