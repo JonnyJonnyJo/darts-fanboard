@@ -89,7 +89,12 @@ const headFor = ({ title, desc, url, type = 'website', ld }) => baseHead.replace
 <meta property="og:description" content="${esc(desc)}">
 <meta property="og:url" content="${SITE}${url}">${ld ? `\n<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>` : ''}`) + '</head>\n<body>\n';
 const crumbs = (items) => ({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: items.map((it, i) => ({ '@type': 'ListItem', position: i + 1, name: it[0], item: SITE + it[1] })) });
-const intro = (h1, text, crumbHtml = '') => `<section class="hero band"><div class="wrap">${crumbHtml}<div class="newshead"><h1>${h1}</h1><p>${text}</p></div></div></section>`;
+const enc = encodeURIComponent;
+// Teilen-Leiste: reine Links (keine Fremd-Skripte), dazu „Link teilen“ über das Handy-Menü bzw. Kopieren
+const shareBar = (url, text) => { const u = SITE + url; return `<div class="share" aria-label="Seite teilen"><span class="share-l">Teilen:</span>
+<a class="sh sh-wa" href="https://wa.me/?text=${enc(text + ' ' + u)}" target="_blank" rel="noopener">WhatsApp</a><a class="sh sh-x" href="https://twitter.com/intent/tweet?text=${enc(text)}&url=${enc(u)}" target="_blank" rel="noopener">X</a><a class="sh sh-fb" href="https://www.facebook.com/sharer/sharer.php?u=${enc(u)}" target="_blank" rel="noopener">Facebook</a><a class="sh sh-tg" href="https://t.me/share/url?url=${enc(u)}&text=${enc(text)}" target="_blank" rel="noopener">Telegram</a><button type="button" class="sh sh-more" data-u="${esc(u)}" data-t="${esc(text)}" onclick="var b=this;(navigator.share?navigator.share({title:document.title,text:b.dataset.t,url:b.dataset.u}):navigator.clipboard.writeText(b.dataset.u).then(function(){b.textContent='Link kopiert ✓'})).catch(function(){})">Link teilen</button></div>`; };
+const tippPromo = `<aside class="promo"><div><b>Tipprunde für deinen Dartclub, die Kumpels oder die Familie</b><span>Kostenlos, in einer Minute erstellt – eigene Tabelle, Tipps der anderen nach dem Anwurf, wie bei Kicktipp.</span></div><a class="btn-r" href="/darts-tippspiel/#runden">Tipprunde erstellen</a></aside>`;
+const intro = (h1, text, crumbHtml = '', share = null) => `<section class="hero band"><div class="wrap">${crumbHtml}<div class="newshead"><h1>${h1}</h1><p>${text}</p></div>${share ? shareBar(share[0], share[1]) : ''}</div></section>`;
 const crumbNav = items => `<nav aria-label="Brotkrumen" class="crumbs">${items.map((it, i) => i < items.length - 1 ? `<a href="${it[1]}">${esc(it[0])}</a>` : `<span>${esc(it[0])}</span>`).join(' › ')}</nav>`;
 const SCRIPTS = {
   app: '<script src="/app.js"></script>',
@@ -204,7 +209,8 @@ for (const [i, n] of data.news.entries()) {
     { title: `${n.title} | Darts aktuell`, desc: String(n.teaser || n.title).slice(0, 158), url: n.path, type: 'article', ld },
     `<section class="hero band"><div class="wrap">${crumbNav([['Startseite', '/'], ['News', '/news/'], [n.title, n.path]])}
 <article class="lead article">${meta(n)}<h1>${esc(n.title)}</h1><p class="date">Veröffentlicht am <time datetime="${esc(n.date)}">${fmtDate(n.date)}</time></p><p>${esc(n.teaser)}</p>${n.body ? `<div class="body">${bodyHtml(n.body)}</div>` : ''}${u ? `<p>Mehr dazu bei der Quelle: <a href="${esc(u)}" rel="noopener" target="_blank">${esc(n.source || u)}</a></p>` : ''}
-<div class="row"><a class="btn-y" href="/darts-wm-spielplan/">WM-Spielplan</a><a class="btn-y" href="/darts-tippspiel/">Zum Tippspiel</a></div></article>
+${shareBar(n.path, n.title + ' – Darts aktuell')}<div class="row"><a class="btn-y" href="/darts-wm-spielplan/">WM-Spielplan</a><a class="btn-y" href="/darts-tippspiel/">Zum Tippspiel</a></div></article>
+${tippPromo}
 </div></section>
 <section class="band"><div class="wrap"><h2>Weitere Darts-News</h2><div class="newslist">${more.map(x => cardHtml(x)).join('')}</div><p style="margin:18px 0 0"><a class="btn-y" href="/news/">Alle News</a></p></div></section>`
   ));
@@ -231,8 +237,8 @@ write('darts-wm-spielplan/index.html', page(
     ld: [crumbs([['Darts aktuell', '/'], ['Darts-WM Spielplan', '/darts-wm-spielplan/']]),
       { '@context': 'https://schema.org', '@type': 'SportsEvent', name: 'PDC World Darts Championship 2026/27', startDate: '2026-12-11', endDate: '2027-01-03', eventStatus: 'https://schema.org/EventScheduled', sport: 'Darts',
         location: { '@type': 'Place', name: 'Alexandra Palace', address: { '@type': 'PostalAddress', addressLocality: 'London', addressCountry: 'GB' } }, organizer: { '@type': 'Organization', name: 'Professional Darts Corporation', url: 'https://www.pdc.tv' } }] },
-  intro('Darts-WM 2026/27 <span>Spielplan</span>', 'Alle Runden, Sessions und Uhrzeiten (deutsche Zeit) der Weltmeisterschaft im Alexandra Palace – mit Paarungen und Ergebnissen, sobald sie feststehen.', crumbNav([['Startseite', '/'], ['Darts-WM Spielplan', '/darts-wm-spielplan/']]))
-  + section('spielplan') + (staticMatches ? `<section class="band">${staticMatches}</section>` : '') + section('turniere'),
+  intro('Darts-WM 2026/27 <span>Spielplan</span>', 'Alle Runden, Sessions und Uhrzeiten (deutsche Zeit) der Weltmeisterschaft im Alexandra Palace – mit Paarungen und Ergebnissen, sobald sie feststehen.', crumbNav([['Startseite', '/'], ['Darts-WM Spielplan', '/darts-wm-spielplan/']]), ['/darts-wm-spielplan/', 'Darts-WM 2026/27: kompletter Spielplan mit deutschen Uhrzeiten und Ergebnissen 🎯'])
+  + section('spielplan') + `<section class="band"><div class="wrap">${tippPromo}</div></section>` + (staticMatches ? `<section class="band">${staticMatches}</section>` : '') + section('turniere'),
   ['app', 'db', 'news']
 ));
 pages.push({ url: '/darts-wm-spielplan/', pri: '0.9', freq: 'hourly' });
@@ -241,7 +247,7 @@ pages.push({ url: '/darts-wm-spielplan/', pri: '0.9', freq: 'hourly' });
 write('darts-tippspiel/index.html', page(
   { title: 'Darts-WM Tippspiel 2026/27 – kostenlos mittippen | Darts aktuell', desc: 'Kostenloses Tippspiel zur Darts-WM 2026/27: Ergebnisse tippen, Bonusfragen beantworten und in der Rangliste mit anderen Darts-Fans messen. Ohne Einsatz, ohne Gewinne.', url: '/darts-tippspiel/',
     ld: crumbs([['Darts aktuell', '/'], ['Darts-Tippspiel', '/darts-tippspiel/']]) },
-  intro('Darts-WM <span>Tippspiel</span>', 'Kostenlos und ohne Einsatz: Tipp die Spiele der WM 2026/27, beantworte die Bonusfragen und kletter in der Rangliste nach oben. Anmeldung per E-Mail-Link, ganz ohne Passwort.', crumbNav([['Startseite', '/'], ['Darts-Tippspiel', '/darts-tippspiel/']]))
+  intro('Darts-WM <span>Tippspiel</span>', 'Kostenlos und ohne Einsatz: Tipp die Spiele der WM 2026/27, beantworte die Bonusfragen und kletter in der Rangliste nach oben. Anmeldung per E-Mail-Link, ganz ohne Passwort.', crumbNav([['Startseite', '/'], ['Darts-Tippspiel', '/darts-tippspiel/']]), ['/darts-tippspiel/', 'Tipp mit mir die Darts-WM 2026/27 – kostenloses Tippspiel mit eigener Tipprunde 🎯'])
   + section('tippspiel'),
   ['db', 'tipp']
 ));
@@ -252,7 +258,7 @@ write('darts-scorer/index.html', page(
   { title: 'Darts-Scorer online: 501 & 301 zählen mit Checkout-Hilfe | Darts aktuell', desc: 'Kostenloser Darts-Scorer im Browser: 501 oder 301 für zwei Spieler zählen, Würfe direkt auf der Scheibe antippen, mit Average und Checkout-Vorschlägen. Ohne Anmeldung.', url: '/darts-scorer/',
     ld: [crumbs([['Darts aktuell', '/'], ['Darts-Scorer', '/darts-scorer/']]),
       { '@context': 'https://schema.org', '@type': 'WebApplication', name: 'Darts-Scorer', url: SITE + '/darts-scorer/', applicationCategory: 'SportsApplication', operatingSystem: 'Browser', inLanguage: 'de-DE', offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' } }] },
-  intro('Darts-Scorer <span>online</span>', 'Zähl deine Legs direkt im Browser: Spielmodus wählen, Würfe auf der Scheibe antippen – Rest, Average und der passende Checkout werden automatisch angezeigt.', crumbNav([['Startseite', '/'], ['Darts-Scorer', '/darts-scorer/']]))
+  intro('Darts-Scorer <span>online</span>', 'Zähl deine Legs direkt im Browser: Spielmodus wählen, Würfe auf der Scheibe antippen – Rest, Average und der passende Checkout werden automatisch angezeigt.', crumbNav([['Startseite', '/'], ['Darts-Scorer', '/darts-scorer/']]), ['/darts-scorer/', 'Kostenloser Darts-Scorer fürs Handy: 501/301 zählen mit Checkout-Hilfe 🎯'])
   + section('spiel'),
   ['app']
 ));
@@ -276,7 +282,7 @@ write('checkout-rechner/index.html', page(
         { '@type': 'Question', name: 'Was ist das höchste Finish im Darts?', acceptedAnswer: { '@type': 'Answer', text: 'Das höchste Finish ist 170: Triple 20, Triple 20 und Bull (T20 T20 Bull).' } },
         { '@type': 'Question', name: 'Welche Zahlen kann man nicht mit drei Darts checken?', acceptedAnswer: { '@type': 'Answer', text: `Unter 170 lassen sich diese Restzahlen nicht mit drei Darts beenden (Bogey-Numbers): ${bogeys.join(', ')}.` } },
         { '@type': 'Question', name: 'Wie checkt man 121?', acceptedAnswer: { '@type': 'Answer', text: `Ein bewährter Weg für 121 ist ${(suggest(121) || []).map(d => d.l).join(' ')}.` } }] }] },
-  intro('Darts <span>Checkout-Rechner</span>', 'Gib deinen Rest ein und sieh sofort den besten Weg zum Doppel. Darunter steht die komplette Checkout-Tabelle von 170 bis 2.', crumbNav([['Startseite', '/'], ['Checkout-Rechner', '/checkout-rechner/']]))
+  intro('Darts <span>Checkout-Rechner</span>', 'Gib deinen Rest ein und sieh sofort den besten Weg zum Doppel. Darunter steht die komplette Checkout-Tabelle von 170 bis 2.', crumbNav([['Startseite', '/'], ['Checkout-Rechner', '/checkout-rechner/']]), ['/checkout-rechner/', 'Darts-Checkout-Rechner: für jeden Rest von 170 bis 2 der beste Weg 🎯'])
   + section('checkout')
   + `<section class="band"><div class="wrap"><h2>Checkout-Tabelle 170 bis 2</h2><p>Empfohlene Wege mit drei Darts. Bevorzugt werden Doppel, die Profis am liebsten spielen (D20, D16, D18) und Wege, bei denen ein Fehlwurf noch ein Finish übrig lässt. Bogey-Numbers ohne Finish: ${bogeys.join(', ')}.</p>
 <table class="stack cotable"><thead><tr><th>Rest</th><th>Weg</th><th>Darts</th></tr></thead><tbody>${rows.join('')}</tbody></table></div></section>`,
@@ -294,4 +300,19 @@ ${pages.map(p => `  <url><loc>${SITE}${p.url}</loc><lastmod>${p.mod || now}</las
 write('robots.txt', `User-agent: *\nDisallow: /admin.html\n\nSitemap: ${SITE}/sitemap.xml\n`);
 write('404.html', page({ title: 'Seite nicht gefunden | Darts aktuell', desc: 'Diese Seite gibt es nicht (mehr).', url: '/404.html' },
   intro('Daneben <span>geworfen</span>', 'Diese Seite gibt es nicht (mehr). <a href="/">Zur Startseite</a> · <a href="/news/">Alle News</a>')).replace('<meta charset="utf-8">', '<meta charset="utf-8">\n<meta name="robots" content="noindex">'));
+/* ---------- IndexNow: neue/geänderte Seiten sofort an Bing, Yandex, Seznam … melden (nur auf GitHub) ---------- */
+const INDEXNOW_KEY = 'c688bc4ac501d6b8a3510cda87c3f894';
+if (fs.existsSync(path.join(ROOT, INDEXNOW_KEY + '.txt'))) fs.copyFileSync(path.join(ROOT, INDEXNOW_KEY + '.txt'), path.join(OUT, INDEXNOW_KEY + '.txt'));
+if (process.env.CI) {
+  try {
+    const live = await (await fetch(SITE + '/sitemap.xml', { headers: { 'Cache-Control': 'no-cache' } })).text();
+    const seen = new Set([...live.matchAll(/<loc>([^<]+)<\/loc><lastmod>([^<]+)<\/lastmod>/g)].map(m => m[1] + '|' + m[2]));
+    const changed = pages.filter(p => !seen.has(SITE + p.url + '|' + (p.mod || now)) && !(p.freq === 'hourly' && seen.has(SITE + p.url + '|' + now))).map(p => SITE + p.url).slice(0, 100);
+    if (changed.length) {
+      const r = await fetch('https://api.indexnow.org/indexnow', { method: 'POST', headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        body: JSON.stringify({ host: 'dartsaktuell.com', key: INDEXNOW_KEY, keyLocation: `${SITE}/${INDEXNOW_KEY}.txt`, urlList: changed }) });
+      console.log(`IndexNow: ${changed.length} URLs gemeldet → HTTP ${r.status}`);
+    } else console.log('IndexNow: nichts Neues');
+  } catch (err) { console.warn('IndexNow übersprungen:', err.message); }
+}
 console.log(`Fertig: ${pages.length} Seiten in der Sitemap.`);
