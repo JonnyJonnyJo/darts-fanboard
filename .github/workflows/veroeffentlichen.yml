@@ -6,6 +6,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      alle_melden:
+        description: 'Alle Seiten per IndexNow an Bing & Co. melden'
+        type: boolean
+        default: false
   schedule:
     - cron: '7,37 * * * *'
 
@@ -31,6 +36,14 @@ jobs:
         run: node scripts/validate.mjs
       - name: Seiten bauen (News, Spielplan, Werkzeuge, Sitemap)
         run: node scripts/build.mjs
+        env:
+          INDEXNOW_ALL: ${{ inputs.alle_melden }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: indexnow
+          path: indexnow-urls.json
+          if-no-files-found: ignore
+          retention-days: 1
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
@@ -45,3 +58,20 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  melden:
+    needs: veroeffentlichen
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          name: indexnow
+        continue-on-error: true
+      - name: Neue Seiten per IndexNow an Bing & Co. melden
+        run: node scripts/indexnow.mjs indexnow-urls.json
