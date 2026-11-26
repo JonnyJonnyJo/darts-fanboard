@@ -472,3 +472,21 @@ nav .links a.navlive::before{content:"";display:inline-block;width:8px;height:8p
 .pper .dchip small{display:block;font-size:11px;font-weight:500;opacity:.75;margin-top:2px}
 .psum{margin:2px 0 0;font-weight:700}
 .psame{margin-top:4px}
+
+/* Darts heute */
+.dh-links{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.dh-links a,.dh-links span{padding:7px 14px;border-radius:999px;border:1px solid var(--line);font-weight:700;font-size:14px;text-decoration:none;color:inherit;background:var(--card)}
+.dh-links a:hover{border-color:var(--red)}
+.dh-links span{background:var(--red);border-color:var(--red);color:#fff}
+.hero .dh-links{margin:0 0 18px}
+.hero .dh-links a{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.25);color:#fff}
+.dh h2{margin-top:28px}
+.dh h3{font-family:Oswald,sans-serif;font-size:19px;margin:18px 0 8px;text-transform:uppercase}
+.dh-t small{opacity:.7}
+.dh-t a{color:inherit}
+.dh-ev{padding-left:20px}
+.dh-ev li{margin:6px 0}
+.dh-news li{margin:6px 0}
+.dh-stand{margin:0 0 6px}
+.dh .btn-r,.dh .btn-y{display:inline-block;margin:10px 8px 0 0;padding:10px 18px;text-decoration:none;font-weight:700}
+.dh .note{color:light-dark(#4b5b52,#b9c7bf);opacity:1}
