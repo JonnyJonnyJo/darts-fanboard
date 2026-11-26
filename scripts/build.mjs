@@ -11,6 +11,12 @@ const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..')
 const OUT = path.join(ROOT, '_site');
 const SITE = 'https://dartsaktuell.com';
 const TZ = 'Europe/Berlin';
+const { LANGS, PATHS, applyPairs } = await import('./i18n.mjs');
+// Sprachversionen derselben Seite (deutsche Adresse → en/nl), für hreflang und den Sprachumschalter
+const ALT = {};
+for (const de of Object.keys(PATHS.en)) ALT[de] = { de, en: PATHS.en[de], nl: PATHS.nl[de] };
+const altLinks = de => ALT[de] ? ['de', 'en', 'nl'].map(l => `<link rel="alternate" hreflang="${l}" href="https://dartsaktuell.com${ALT[de][l]}">`).join('\n') + `\n<link rel="alternate" hreflang="x-default" href="https://dartsaktuell.com${de}">` : '';
+const langSwitch = (de, cur) => ['de', 'en', 'nl'].map(l => { const u = (ALT[de] || ALT['/'])[l]; return l === cur ? `<b aria-current="true">${l.toUpperCase()}</b>` : `<a href="${u}" hreflang="${l}" lang="${l}">${l.toUpperCase()}</a>`; }).join('');
 const rd = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const safeUrl = u => /^https?:\/\//i.test(String(u || '')) ? String(u) : '';
@@ -84,7 +90,8 @@ let index = rd('index.html');
 const headEnd = index.indexOf('</head>');
 const head = index.slice(0, headEnd);
 const navStart = index.indexOf('<nav>'), navEnd = index.indexOf('</nav>') + 6;
-const nav = index.slice(navStart, navEnd);
+const nav = index.slice(navStart, navEnd).replace('</a></div>\n</div></nav>', '</a></div><span class="langsw"><!--LANGSW--></span>\n</div></nav>');
+if (!nav.includes('<!--LANGSW-->')) console.warn('Sprachumschalter: Platz im Menü nicht gefunden');
 const footStart = index.indexOf('<footer'), footEnd = index.indexOf('</footer>') + 9;
 const footer = index.slice(footStart, footEnd);
 const section = id => {
@@ -105,7 +112,7 @@ const headFor = ({ title, desc, url, type = 'website', ld }) => baseHead.replace
 <meta property="og:type" content="${type}">
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(desc)}">
-<meta property="og:url" content="${SITE}${url}">${ld ? `\n<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>` : ''}`) + '</head>\n<body>\n';
+<meta property="og:url" content="${SITE}${url}">${ALT[url] ? '\n' + altLinks(url) : ''}${ld ? `\n<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>` : ''}`) + '</head>\n<body>\n';
 const crumbs = (items) => ({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: items.map((it, i) => ({ '@type': 'ListItem', position: i + 1, name: it[0], item: SITE + it[1] })) });
 const enc = encodeURIComponent;
 // Teilen-Leiste: reine Links (keine Fremd-Skripte), dazu „Link teilen“ über das Handy-Menü bzw. Kopieren
@@ -120,7 +127,7 @@ const SCRIPTS = {
   tipp: '<script src="/tippspiel.js"></script>',
   news: '<script src="/news.js"></script>'
 };
-const page = (meta, body, scripts = []) => `${headFor(meta)}${nav}\n${body}\n${footer}\n${scripts.map(s => SCRIPTS[s]).join('\n')}\n</body>\n</html>\n`;
+const page = (meta, body, scripts = []) => `${headFor(meta)}${nav.replace('<!--LANGSW-->', langSwitch(meta.url, 'de'))}\n${body}\n${footer}\n${scripts.map(s => SCRIPTS[s]).join('\n')}\n</body>\n</html>\n`;
 
 /* ---------- News-HTML ---------- */
 const fmtDate = d => new Date(d + 'T12:00:00Z').toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric', timeZone: TZ });
@@ -204,6 +211,7 @@ const lead = data.news[li];
 index = index.replace('<!--PRERENDER:oom-->', oom.slice(0, 10).map(oomRow).join('')).replace('<!--PRERENDER:oomstand-->', oomStand);
 index = index.replace('<!--PRERENDER:lead-->', lead ? leadHtml(lead) : '')
   .replace('<!--PRERENDER:list-->', data.news.filter((_, i) => i !== li).slice(0, 6).map(n => cardHtml(n)).join(''));
+index = index.replace(navStart >= 0 ? index.slice(navStart, navEnd) : '', nav.replace('<!--LANGSW-->', langSwitch('/', 'de'))).replace('<link rel="canonical" href="https://dartsaktuell.com/">', '<link rel="canonical" href="https://dartsaktuell.com/">\n' + altLinks('/'));
 write('index.html', index);
 
 const pages = [{ url: '/', pri: '1.0', freq: 'hourly' }];
@@ -333,6 +341,156 @@ ${tippPromo}
   ['db', 'news']
 ));
 pages.push({ url: '/pdc-weltrangliste/', pri: '0.9', freq: 'daily' });
+
+/* ---------- Internationale Version: /en/ und /nl/ ---------- */
+let intlNews = [];
+try { intlNews = await rest('news_intl?select=*&order=published_at.desc,id.desc&limit=300'); console.log(`Supabase: ${intlNews.length} internationale News`); }
+catch (err) { console.warn('Internationale News nicht geladen:', err.message); }
+for (const L of Object.values(LANGS)) {
+  const C = L.code, T = L.t, P = T.pages, MAP = PATHS[C];
+  const loc = (d, o) => new Date(d + 'T12:00:00Z').toLocaleDateString(L.locale, { timeZone: L.tz, ...o });
+  const dLong = d => loc(d, { day: 'numeric', month: 'long', year: 'numeric' });
+  const mapLinks = html => html.replace(/href="(\/[^"#?]*)([#?][^"]*)?"/g, (m, p, rest_ = '') => MAP[p] ? `href="${MAP[p]}${rest_}"` : m);
+  // Vorlage übersetzen
+  let tpl = applyPairs(rd('index.html'), L.tpl, `${C}/index.html`);
+  const tHead = tpl.slice(0, tpl.indexOf('</head>'));
+  const ns = tpl.indexOf('<nav>'), ne = tpl.indexOf('</nav>') + 6;
+  const tNav = tpl.slice(ns, ne).replace('</a></div>\n</div></nav>', '</a></div><span class="langsw"><!--LANGSW--></span>\n</div></nav>').replace('href="/"', `href="/${C}/"`);
+  const tFooter = tpl.slice(tpl.indexOf('<footer'), tpl.indexOf('</footer>') + 9);
+  const tSection = id => { const m = tpl.match(new RegExp(`<section[^>]*id="${id}"[\\s\\S]*?</div></section>`)); if (!m) throw new Error(`${C}: Abschnitt fehlt: ${id}`); return m[0]; };
+  const tBase = tHead.replace(/<title>[\s\S]*?<\/title>\n?/, '').replace(/<meta name="description"[^>]*>\n?/, '').replace(/<link rel="canonical"[^>]*>\n?/, '')
+    .replace(/<meta property="og:(title|description|url|type)"[^>]*>\n?/g, '').replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>\n?/, '');
+  const RTS = `<script>window.DARTS_RT=${JSON.stringify(L.rt)};window.DARTS_LANG='${C}';</script>`;
+  const tScripts = { app: `<script src="/${C}/app.js"></script>`, db: SCRIPTS.db, tipp: `<script src="/${C}/tippspiel.js"></script>`, news: `<script src="/${C}/news.js"></script>` };
+  const tHeadFor = ({ title, desc, url, de, type = 'website', ld }) => tBase.replace('<meta charset="utf-8">', `<meta charset="utf-8">
+<title>${esc(title)}</title>
+<meta name="description" content="${esc(desc)}">
+<link rel="canonical" href="${SITE}${url}">
+<meta property="og:type" content="${type}">
+<meta property="og:title" content="${esc(title)}">
+<meta property="og:description" content="${esc(desc)}">
+<meta property="og:url" content="${SITE}${url}">${de && ALT[de] ? '\n' + altLinks(de) : ''}${ld ? `\n<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>` : ''}`) + '</head>\n<body>\n';
+  const tPage = (meta, body, scripts = []) => mapLinks(`${tHeadFor(meta)}${tNav.replace('<!--LANGSW-->', langSwitch(meta.de || '/', C))}\n${body}\n${tFooter}\n${RTS}\n${scripts.map(s => tScripts[s]).join('\n')}\n</body>\n</html>\n`);
+  const tCrumbNav = items => `<nav aria-label="${T.crumbs}" class="crumbs">${items.map((it, i) => i < items.length - 1 ? `<a href="${it[1]}">${esc(it[0])}</a>` : `<span>${esc(it[0])}</span>`).join(' › ')}</nav>`;
+  const tShare = (url, text) => shareBar(url, text).replace('aria-label="Seite teilen"', `aria-label="${T.shareAria}"`).replace('>Teilen:<', `>${T.share}<`).replace(">Link teilen</button>", `>${T.shareLink}</button>`).replace("'Link kopiert ✓'", `'${T.copied}'`);
+  const tIntro = (h1, text, crumbHtml, share) => `<section class="hero band"><div class="wrap">${crumbHtml}<div class="newshead"><h1>${h1}</h1><p>${text}</p></div>${share ? tShare(share[0], share[1]) : ''}</div></section>`;
+  const tPromo = `<aside class="promo"><div><b>${T.promoB}</b><span>${T.promoS}</span></div><a class="btn-r" href="${MAP['/darts-tippspiel/']}#runden">${T.promoBtn}</a></aside>`;
+  const home = MAP['/'];
+  // News dieser Sprache
+  const news = intlNews.filter(n => n.lang === C).map(r => ({ ...r, when: r.when_label || loc(r.published_at, { weekday: 'short', day: 'numeric', month: 'short' }), path: `${MAP['/news/']}${r.slug || slugify(r.title)}/`, date: r.published_at, top: r.is_top }));
+  const tMeta = n => `<div class="meta"><span class="tag">${esc(n.tag)}</span><span class="when">${esc(n.when)}</span></div>`;
+  const tSrc = n => { const u = safeUrl(n.url); return u ? `<span class="src">${T.source} <a href="${esc(u)}" rel="noopener" target="_blank">${esc(n.source || 'Link')}</a></span>` : ''; };
+  const tLead = n => `${tMeta(n)}<h2><a href="${n.path}">${esc(n.title)}</a></h2><p>${esc(n.teaser)}</p>${tSrc(n)}`;
+  const tCard = (n, h = 'h3') => `<article class="ncard">${tMeta(n)}<${h}><a href="${n.path}">${esc(n.title)}</a></${h}><p>${esc(n.teaser)}</p>${tSrc(n)}</article>`;
+  const tOomRow = r => oomRow(r).replace('title="Deutschland">DE<', `title="${T.germany}">${C === 'en' ? 'GER' : 'DU'}<`);
+  const tMoney = k => '£' + Math.round(Number(k) * 1000).toLocaleString(L.locale);
+  const tStand = oomMeta ? `${T.asOf}: ${dLong(oomMeta.as_of)}` : '';
+  const out = (rel, html) => { write(`${C}/${rel}`, html); };
+  // JavaScript in der Sprache
+  for (const f of ['app.js', 'tippspiel.js', 'news.js']) {
+    const js = applyPairs(rd(f), L.js[f] || [], `${C}/${f}`);
+    fs.mkdirSync(path.join(OUT, C), { recursive: true });
+    fs.writeFileSync(path.join(OUT, C, f), js);
+    VER[`${C}/${f}`] = crypto.createHash('sha1').update(js).digest('hex').slice(0, 8);
+  }
+
+  // Startseite
+  const li2 = Math.max(0, news.findIndex(n => n.top));
+  let h = tpl.replace('<!--PRERENDER:oom-->', oom.slice(0, 10).map(tOomRow).join('')).replace('<!--PRERENDER:oomstand-->', tStand)
+    .replace('<!--PRERENDER:lead-->', news[li2] ? tLead(news[li2]) : '').replace('<!--PRERENDER:list-->', news.filter((_, i) => i !== li2).slice(0, 6).map(n => tCard(n)).join(''));
+  h = h.replace(/<title>[\s\S]*?<\/title>/, `<title>${esc(P.home.title)}</title>`).replace(/<meta name="description" content="[^"]*">/, `<meta name="description" content="${esc(P.home.desc)}">`)
+    .replace('<link rel="canonical" href="https://dartsaktuell.com/">', `<link rel="canonical" href="${SITE}${home}">\n${altLinks('/')}`)
+    .replace(/<meta property="og:title" content="[^"]*">/, `<meta property="og:title" content="${esc(P.home.title)}">`).replace(/<meta property="og:description" content="[^"]*">/, `<meta property="og:description" content="${esc(P.home.desc)}">`)
+    .replace('<meta property="og:url" content="https://dartsaktuell.com/">', `<meta property="og:url" content="${SITE}${home}">`)
+    .replace(tpl.slice(ns, ne), tNav.replace('<!--LANGSW-->', langSwitch('/', C)))
+    .replace('<script src="/app.js"></script>', `${RTS}\n<script src="/${C}/app.js"></script>`).replace('<script src="/tippspiel.js"></script>', `<script src="/${C}/tippspiel.js"></script>`).replace('<script src="/news.js"></script>', `<script src="/${C}/news.js"></script>`);
+  out('index.html', mapLinks(h));
+  pages.push({ url: home, pri: '0.9', freq: 'hourly' });
+
+  // News
+  out(`${MAP['/news/'].slice(4)}index.html`, tPage({ title: P.news.title, desc: P.news.desc, url: MAP['/news/'], de: '/news/', ld: crumbs([['Darts aktuell', home], ['News', MAP['/news/']]]) },
+    tIntro(P.news.h1, P.news.intro, tCrumbNav([[T.home, home], ['News', MAP['/news/']]])) + `<section class="band"><div class="wrap"><div class="newslist">${news.map(n => tCard(n, 'h2')).join('')}</div></div></section>`));
+  pages.push({ url: MAP['/news/'], pri: '0.7', freq: 'hourly' });
+  for (const n of news) {
+    const u = safeUrl(n.url), more = news.filter(x => x !== n).slice(0, 3);
+    const ld = [{ '@context': 'https://schema.org', '@type': 'NewsArticle', headline: n.title, description: n.teaser, datePublished: n.date, dateModified: n.date, inLanguage: L.locale, mainEntityOfPage: SITE + n.path,
+      author: { '@type': 'Organization', name: 'Darts aktuell', url: SITE + home }, publisher: { '@type': 'Organization', name: 'Darts aktuell', url: SITE + home } }, crumbs([['Darts aktuell', home], ['News', MAP['/news/']], [n.title, n.path]])];
+    out(`${n.path.slice(4)}index.html`, tPage({ title: `${n.title} | Darts aktuell`, desc: String(n.teaser || n.title).slice(0, 158), url: n.path, type: 'article', ld },
+      `<section class="hero band"><div class="wrap">${tCrumbNav([[T.home, home], ['News', MAP['/news/']], [n.title, n.path]])}
+<article class="lead article">${tMeta(n)}<h1>${esc(n.title)}</h1><p class="date">${T.published} <time datetime="${esc(n.date)}">${dLong(n.date)}</time></p><p>${esc(n.teaser)}</p>${n.body ? `<div class="body">${bodyHtml(n.body)}</div>` : ''}${u ? `<p>${T.moreAt} <a href="${esc(u)}" rel="noopener" target="_blank">${esc(n.source || u)}</a></p>` : ''}
+${tShare(n.path, n.title + ' – Darts aktuell')}<div class="row"><a class="btn-y" href="${MAP['/darts-wm-spielplan/']}">${T.toSchedule}</a><a class="btn-y" href="${MAP['/darts-tippspiel/']}">${T.toPredictor}</a></div></article>
+${tPromo}
+</div></section>
+<section class="band"><div class="wrap"><h2>${T.moreNews}</h2><div class="newslist">${more.map(x => tCard(x)).join('')}</div><p style="margin:18px 0 0"><a class="btn-y" href="${MAP['/news/']}">${T.allNews}</a></p></div></section>`));
+    pages.push({ url: n.path, pri: '0.6', freq: 'weekly', mod: n.date });
+  }
+
+  // Spielplan
+  const tDay = iso => new Date(iso).toLocaleDateString('sv-SE', { timeZone: L.tz });
+  const tTime = iso => new Date(iso).toLocaleTimeString(L.locale, { hour: '2-digit', minute: '2-digit', timeZone: L.tz });
+  let tMatches = '';
+  if (data.matches.length) {
+    const days = [...new Set(data.matches.map(m => tDay(m.starts_at)))].sort();
+    tMatches = `<div class="wrap"><h2>${T.matchesH}</h2>${days.map(d => `<h3>${loc(d, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</h3><table class="stack"><thead><tr><th>${T.time}</th><th>${T.round}</th><th>${T.p1}</th><th>${T.result}</th><th>${T.p2}</th></tr></thead><tbody>${data.matches.filter(m => tDay(m.starts_at) === d).map(m => {
+      const done = m.sets1 != null && m.sets2 != null;
+      return `<tr><td>${tTime(m.starts_at)}</td><td>${esc(L.rt[m.round] || m.round)}</td><td>${esc(m.player1)}</td><td>${done ? `${m.sets1}-${m.sets2}` : '–'}</td><td>${esc(m.player2)}</td></tr>`; }).join('')}</tbody></table>`).join('')}</div>`;
+  }
+  const S = P.schedule, sUrl = MAP['/darts-wm-spielplan/'];
+  out(`${sUrl.slice(4)}index.html`, tPage({ title: S.title, desc: S.desc, url: sUrl, de: '/darts-wm-spielplan/', ld: [crumbs([['Darts aktuell', home], [S.crumb, sUrl]]),
+    { '@context': 'https://schema.org', '@type': 'SportsEvent', name: 'PDC World Darts Championship 2026/27', startDate: '2026-12-11', endDate: '2027-01-03', eventStatus: 'https://schema.org/EventScheduled', sport: 'Darts',
+      location: { '@type': 'Place', name: 'Alexandra Palace', address: { '@type': 'PostalAddress', addressLocality: 'London', addressCountry: 'GB' } }, organizer: { '@type': 'Organization', name: 'Professional Darts Corporation', url: 'https://www.pdc.tv' } }] },
+    tIntro(S.h1, S.intro, tCrumbNav([[T.home, home], [S.crumb, sUrl]]), [sUrl, S.share]) + tSection('spielplan') + `<section class="band"><div class="wrap">${tPromo}</div></section>` + (tMatches ? `<section class="band">${tMatches}</section>` : '') + tSection('turniere'),
+    ['app', 'db', 'news']));
+  pages.push({ url: sUrl, pri: '0.9', freq: 'hourly' });
+
+  // Tippspiel
+  const Pr = P.predictor, pUrl = MAP['/darts-tippspiel/'];
+  out(`${pUrl.slice(4)}index.html`, tPage({ title: Pr.title, desc: Pr.desc, url: pUrl, de: '/darts-tippspiel/', ld: crumbs([['Darts aktuell', home], [Pr.crumb, pUrl]]) },
+    tIntro(Pr.h1, Pr.intro, tCrumbNav([[T.home, home], [Pr.crumb, pUrl]]), [pUrl, Pr.share]) + tSection('tippspiel'), ['db', 'tipp']));
+  pages.push({ url: pUrl, pri: '0.8', freq: 'daily' });
+
+  // Punkte-Rechner
+  const Sc = P.scorer, scUrl = MAP['/darts-punkte-rechner/'];
+  out(`${scUrl.slice(4)}index.html`, tPage({ title: Sc.title, desc: Sc.desc, url: scUrl, de: '/darts-punkte-rechner/', ld: [crumbs([['Darts aktuell', home], [Sc.crumb, scUrl]]),
+    { '@context': 'https://schema.org', '@type': 'WebApplication', name: Sc.app, url: SITE + scUrl, applicationCategory: 'SportsApplication', operatingSystem: 'Browser', inLanguage: L.locale, offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' } }] },
+    tIntro(Sc.h1, Sc.intro, tCrumbNav([[T.home, home], [Sc.crumb, scUrl]]), [scUrl, Sc.share]) + tSection('spiel'), ['app']));
+  pages.push({ url: scUrl, pri: '0.8', freq: 'monthly' });
+
+  // Checkout
+  const Co = P.checkout, coUrl = MAP['/checkout-rechner/'];
+  const coRows = [];
+  for (let v = 170; v >= 2; v--) { const r = suggest(v); coRows.push(`<tr id="finish-${v}"><td><b>${v}</b></td><td>${r ? r.map(d => `<span class="${kind(d.l)}">${d.l}</span>`).join(' ') : T.noCheckout}</td><td>${r ? r.length : '–'}</td></tr>`); }
+  out(`${coUrl.slice(4)}index.html`, tPage({ title: Co.title, desc: Co.desc, url: coUrl, de: '/checkout-rechner/', ld: [crumbs([['Darts aktuell', home], [Co.crumb, coUrl]]),
+    { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: [
+      { '@type': 'Question', name: Co.faq[0][0], acceptedAnswer: { '@type': 'Answer', text: Co.faq[0][1] } },
+      { '@type': 'Question', name: Co.faq[1][0], acceptedAnswer: { '@type': 'Answer', text: Co.faq[1][1] + bogeys.join(', ') + '.' } },
+      { '@type': 'Question', name: Co.faq[2][0], acceptedAnswer: { '@type': 'Answer', text: Co.faq[2][1] + (suggest(121) || []).map(d => d.l).join(' ') + '.' } }] }] },
+    tIntro(Co.h1, Co.intro, tCrumbNav([[T.home, home], [Co.crumb, coUrl]]), [coUrl, Co.share]) + tSection('checkout')
+    + `<section class="band"><div class="wrap"><h2>${Co.tableH}</h2><p>${Co.tableP} ${bogeys.join(', ')}.</p>
+<table class="stack cotable"><thead><tr><th>${Co.thRest}</th><th>${Co.thWay}</th><th>${Co.thDarts}</th></tr></thead><tbody>${coRows.join('')}</tbody></table></div></section>`, ['app']));
+  pages.push({ url: coUrl, pri: '0.8', freq: 'monthly' });
+
+  // Weltrangliste
+  const O = P.oom, oUrl = MAP['/pdc-weltrangliste/'];
+  out(`${oUrl.slice(4)}index.html`, tPage({ title: O.title, desc: `${O.desc} ${tStand}.`, url: oUrl, de: '/pdc-weltrangliste/', ld: [crumbs([['Darts aktuell', home], [O.crumb, oUrl]]),
+    { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: [
+      { '@type': 'Question', name: O.faq[0][0], acceptedAnswer: { '@type': 'Answer', text: oom[0] ? `${oom[0].player}${O.faq[0][1]}${tMoney(oom[0].prize_k)} (${tStand}).` : '' } },
+      { '@type': 'Question', name: O.faq[1][0], acceptedAnswer: { '@type': 'Answer', text: O.faq[1][1] } }] }] },
+    tIntro(O.h1, `${O.intro} ${tStand}.`, tCrumbNav([[T.home, home], [O.crumb, oUrl]]), [oUrl, O.share])
+    + `<section class="band"><div class="wrap">
+<div class="oom-wrap"><table class="oom" id="oomTable"><thead><tr><th class="r">${T.rank}</th><th></th><th>${T.player}</th><th class="r">${T.prize}</th></tr></thead><tbody id="oomBody">${oom.map(tOomRow).join('')}</tbody></table></div>
+<p class="note" id="oomStand">${tStand}. ${T.source} <a href="${esc((oomMeta && oomMeta.source_url) || 'https://www.pdc.tv/order-merit')}" rel="noopener" target="_blank">${esc((oomMeta && oomMeta.source) || 'PDC')}</a>. ${T.oomNoteTail}</p>
+<h2>${O.howH}</h2><p>${O.how[0]}</p><p>${O.how[1]}</p>
+${tPromo}
+</div></section>`, ['db', 'news']));
+  pages.push({ url: oUrl, pri: '0.8', freq: 'daily' });
+  console.log(`${C}: ${news.length} News, ${pages.filter(p => p.url.startsWith('/' + C + '/')).length} Seiten`);
+}
+// Versionsnummern auch für die Sprach-Skripte (die Seiten oben sind schon geschrieben → nachträglich ersetzen)
+for (const C of Object.keys(LANGS)) {
+  const walk = d => { for (const f of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, f.name); if (f.isDirectory()) walk(p); else if (f.name.endsWith('.html')) { let h = fs.readFileSync(p, 'utf8'); for (const n of ['app.js', 'tippspiel.js', 'news.js']) h = h.split(`"/${C}/${n}"`).join(`"/${C}/${n}?v=${VER[C + '/' + n]}"`); fs.writeFileSync(p, h); } } };
+  walk(path.join(OUT, C));
+}
 
 /* ---------- sitemap.xml & robots.txt ---------- */
 const now = new Date().toISOString().slice(0, 10);
