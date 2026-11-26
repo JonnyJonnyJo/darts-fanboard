@@ -134,6 +134,10 @@ const PT={
 const PTX=PT||{};
 let PD;try{PD=JSON.parse(localStorage.getItem(PKEY))}catch(e){PD=null}
 if(!PD||!Array.isArray(PD.players))PD={v:1,players:[],visits:[],legs:[]};
+/* Einmalig: ältere Daten, in denen mehrere Legs als ein Spiel gespeichert sind, in einzelne Legs aufteilen */
+const migrate=D=>{if(D.mig)return D;D.visits.forEach(v=>{if(v.lg!==undefined&&!String(v.g).includes('_'))v.g=v.g+'_'+v.lg});
+  D.legs.forEach(l=>{if(String(l.g).includes('_'))return;let best=null;D.visits.forEach(v=>{if(v.pid===l.pid&&String(v.g).startsWith(l.g+'_')&&(!best||Math.abs(v.t-l.t)-(v.c?2000:0)<Math.abs(best.t-l.t)-(best.c?2000:0)))best=v});if(best)l.g=best.g});D.mig=1;return D};
+if(!PD.mig){migrate(PD);try{localStorage.setItem(PKEY,JSON.stringify(PD))}catch(e){}}
 const psave=()=>{if(PD.visits.length>30000)PD.visits=PD.visits.slice(-30000);if(PD.legs.length>6000)PD.legs=PD.legs.slice(-6000);try{localStorage.setItem(PKEY,JSON.stringify(PD))}catch(e){}};
 const pById=id=>PD.players.find(p=>p.id===id);
 const DBL=v=>(v>=2&&v<=40&&v%2===0)||v===50;
@@ -237,7 +241,7 @@ if($('pstats')&&PT){
     const free=S.pids.findIndex(x=>!x);if(free>=0){S.pids[free]=id;S.names[free]=pById(id).name}render()});
   $('pstats').addEventListener('change',e=>{if(e.target.id!=='pImp'||!e.target.files[0])return;const f=e.target.files[0];e.target.value='';const r=new FileReader();
     r.onerror=()=>{pMsg=PTX.impBad;pRender()};
-    r.onload=()=>{try{let txt=String(r.result||'').replace(/^﻿/,'').trim();const x=JSON.parse(txt);if(!x||!Array.isArray(x.players)||!Array.isArray(x.visits)||!Array.isArray(x.legs))throw 0;
+    r.onload=()=>{try{let txt=String(r.result||'').replace(/^﻿/,'').trim();const x=JSON.parse(txt);if(!x||!Array.isArray(x.players)||!Array.isArray(x.visits)||!Array.isArray(x.legs))throw 0;migrate(x);
       const ids=new Set(PD.players.map(p=>p.id)),key=v=>v.pid+'|'+v.t+'|'+v.u;let np=0,nv=0;x.players.forEach(p=>{if(p&&p.id&&p.name&&!ids.has(p.id)){PD.players.push({id:String(p.id),name:String(p.name).slice(0,24),c:p.c||Date.now()});np++}});
       const have=new Set(PD.visits.map(key));x.visits.forEach(v=>{if(v&&v.pid&&!have.has(key(v))){PD.visits.push(v);nv++}});const hl=new Set(PD.legs.map(key));x.legs.forEach(l=>{if(l&&l.pid&&!hl.has(key(l)))PD.legs.push(l)});
       PD.visits.sort((a,b)=>a.t-b.t);PD.legs.sort((a,b)=>a.t-b.t);if(x.exported&&!(PD.bak>x.exported))PD.bak=x.exported;psave();pView=pView||(x.players[0]&&x.players[0].id)||null;pMsg=np||nv?PTX.impOk+' '+PTX.impCnt(np,nv):PTX.impSame;render();$('pstats').scrollIntoView({block:'start'})}catch(err){pMsg=PTX.impBad;pRender()}};r.readAsText(f)});
