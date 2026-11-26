@@ -119,7 +119,8 @@ const EN = {
       ['aria-label="Name Spieler ${p+1}"', 'aria-label="Name of player ${p+1}"'],
       ['title="Gewonnene Legs"', 'title="Legs won"'],
       ['<span>Average<b>${avg}</b></span><span>180er<b>', '<span>Average<b>${avg}</b></span><span>180s<b>'],
-      ['<span>Top-Finish<b>', '<span>Best checkout<b>']
+      ['<span>Top-Finish<b>', '<span>Best checkout<b>'],
+      ['data-act="undo">Zurück</button><button type="button" class="padact" data-act="new">Neues Spiel</button>', 'data-act="undo">Undo</button><button type="button" class="padact" data-act="new">New game</button>']
     ],
     'tippspiel.js': [
       ["const TZ = 'Europe/Berlin';", "const TZ = 'Europe/London';"],
@@ -355,7 +356,8 @@ const nlJs = {
     ['aria-label="Name Spieler ${p+1}"', 'aria-label="Naam speler ${p+1}"'],
     ['title="Gewonnene Legs"', 'title="Gewonnen legs"'],
     ['<span>Average<b>${avg}</b></span><span>180er<b>', '<span>Gemiddelde<b>${avg}</b></span><span>180\'s<b>'],
-    ['<span>Top-Finish<b>', '<span>Hoogste finish<b>']
+    ['<span>Top-Finish<b>', '<span>Hoogste finish<b>'],
+    ['data-act="undo">Zurück</button><button type="button" class="padact" data-act="new">Neues Spiel</button>', 'data-act="undo">Terug</button><button type="button" class="padact" data-act="new">Nieuw spel</button>']
   ],
   'tippspiel.js': [
     ['const esc = s =>', "const tr = s => (window.DARTS_RT || {})[s] || s;\n  const esc = s =>"],
