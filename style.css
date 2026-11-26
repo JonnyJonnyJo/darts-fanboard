@@ -490,3 +490,14 @@ nav .links a.navlive::before{content:"";display:inline-block;width:8px;height:8p
 .dh-stand{margin:0 0 6px}
 .dh .btn-r,.dh .btn-y{display:inline-block;margin:10px 8px 0 0;padding:10px 18px;text-decoration:none;font-weight:700}
 .dh .note{color:light-dark(#4b5b52,#b9c7bf);opacity:1}
+
+/* Zahlenfeld: größere Trefferflächen bei gleicher Größe – die Lücken zwischen den Feldern zählen jetzt mit zum Knopf */
+.pad{gap:2px}
+.padmod,.padnums{gap:0}
+.pad button{border:3px solid transparent;background-clip:padding-box;box-shadow:inset 0 0 0 1px var(--edge);min-height:50px;font-size:19px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;transition:background-color .08s,transform .08s}
+.pad button:hover{border-color:transparent;box-shadow:inset 0 0 0 1px var(--gold)}
+.pad button:active,.pad button.hit{background-color:var(--gold);color:#0b2a18;transform:scale(.96)}
+.padmod button[data-m="2"].on{border-color:transparent;box-shadow:none}
+.padmod button[data-m="3"].on{border-color:transparent;box-shadow:none}
+.pad .padact{font-size:12px}
+@media(max-width:900px){.pad button{min-height:46px}}

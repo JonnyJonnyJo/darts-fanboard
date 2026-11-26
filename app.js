@@ -290,7 +290,7 @@ const quick=v=>{
 };
 
 /* Zahlenfeld unter dem Board: Double/Triple wählen, dann Zahl antippen */
-let mult=1;
+let mult=1,padLast={b:null,t:0};
 const pad=$('pad');
 const drawPad=()=>{
   if(!pad)return;
@@ -301,6 +301,8 @@ const drawPad=()=>{
 if(pad){
   pad.addEventListener('click',e=>{
     const b=e.target.closest('button');if(!b||b.disabled)return;
+    const nowT=Date.now();if(b.dataset.n&&b.dataset.n===padLast.b&&nowT-padLast.t<90)return;padLast={b:b.dataset.n,t:nowT};
+    try{navigator.vibrate&&navigator.vibrate(8)}catch(_){}
     if(b.dataset.act){$(b.dataset.act==='undo'?'undo':'newleg').click();return}
     if(b.dataset.m){const m=+b.dataset.m;mult=mult===m?1:m;drawPad();return}
     const n=+b.dataset.n;
@@ -309,6 +311,7 @@ if(pad){
     else if(n===25)d=mult===2?{v:50,l:'Bull',k:'d'}:{v:25,l:'25',k:'s'};
     else d={v:n*mult,l:(mult===2?'D':mult===3?'T':'')+n,k:mult===2?'d':mult===3?'t':'s'};
     mult=1;drawPad();throwDart(d);
+    const nb=pad.querySelector(`button[data-n="${n}"]`);if(nb){nb.classList.add('hit');setTimeout(()=>nb.classList.remove('hit'),140)}
   });
   drawPad();
 }
