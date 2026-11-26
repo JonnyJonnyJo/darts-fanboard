@@ -651,16 +651,18 @@ write('404.html', page({ title: 'Seite nicht gefunden | Darts aktuell', desc: 'D
 /* ---------- IndexNow: neue/geänderte Seiten sofort an Bing, Yandex, Seznam … melden (nur auf GitHub) ---------- */
 const INDEXNOW_KEY = 'c688bc4ac501d6b8a3510cda87c3f894';
 if (fs.existsSync(path.join(ROOT, INDEXNOW_KEY + '.txt'))) fs.copyFileSync(path.join(ROOT, INDEXNOW_KEY + '.txt'), path.join(OUT, INDEXNOW_KEY + '.txt'));
+// Die Meldung selbst passiert erst NACH dem Veröffentlichen (scripts/indexnow.mjs), damit Bing die neuen Seiten nicht als 404 sieht.
 if (process.env.CI) {
   try {
-    const live = await (await fetch(SITE + '/sitemap.xml', { headers: { 'Cache-Control': 'no-cache' } })).text();
-    const seen = new Set([...live.matchAll(/<loc>([^<]+)<\/loc><lastmod>([^<]+)<\/lastmod>/g)].map(m => m[1] + '|' + m[2]));
-    const changed = pages.filter(p => !seen.has(SITE + p.url + '|' + (p.mod || now)) && !(p.freq === 'hourly' && seen.has(SITE + p.url + '|' + now))).map(p => SITE + p.url).slice(0, 2000);
-    if (changed.length) {
-      const r = await fetch('https://api.indexnow.org/indexnow', { method: 'POST', headers: { 'Content-Type': 'application/json; charset=utf-8' },
-        body: JSON.stringify({ host: 'dartsaktuell.com', key: INDEXNOW_KEY, keyLocation: `${SITE}/${INDEXNOW_KEY}.txt`, urlList: changed }) });
-      console.log(`IndexNow: ${changed.length} URLs gemeldet → HTTP ${r.status}`);
-    } else console.log('IndexNow: nichts Neues');
-  } catch (err) { console.warn('IndexNow übersprungen:', err.message); }
+    let changed;
+    if (process.env.INDEXNOW_ALL === 'true') changed = pages.map(p => SITE + p.url);
+    else {
+      const live = await (await fetch(SITE + '/sitemap.xml', { headers: { 'Cache-Control': 'no-cache' } })).text();
+      const seen = new Set([...live.matchAll(/<loc>([^<]+)<\/loc><lastmod>([^<]+)<\/lastmod>/g)].map(m => m[1] + '|' + m[2]));
+      changed = pages.filter(p => !seen.has(SITE + p.url + '|' + (p.mod || now)) && !(p.freq === 'hourly' && seen.has(SITE + p.url + '|' + now))).map(p => SITE + p.url);
+    }
+    fs.writeFileSync(path.join(ROOT, 'indexnow-urls.json'), JSON.stringify(changed.slice(0, 10000)));
+    console.log(`IndexNow: ${changed.length} neue/geänderte URLs vorgemerkt (Meldung nach dem Veröffentlichen)`);
+  } catch (err) { console.warn('IndexNow-Liste übersprungen:', err.message); }
 }
 console.log(`Fertig: ${pages.length} Seiten in der Sitemap.`);
