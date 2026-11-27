@@ -86,6 +86,7 @@ const EN = {
   js: {
     'app.js': [
       ['const esc=s=>', 'const tr=s=>(window.DARTS_RT||{})[s]||s;const esc=s=>'],
+      ["hSound?'Ansage aus':'Ansage an'", "hSound?'Announcer off':'Announcer on'"],
       ['Die WM 2026/27 ist vorbei – danke fürs Mitfiebern!', 'The 2026/27 World Championship is over – thanks for following along!'],
       ['Die WM läuft! Finale am Sonntag, 3. Januar, im Alexandra Palace.', 'The World Championship is on! Final on Sunday 3 January at Alexandra Palace.'],
       ["const two='13:30 · 20:00';", "const two='12:30 · 19:00';"],
@@ -340,6 +341,7 @@ const NL = {
 const nlJs = {
   'app.js': [
     ['const esc=s=>', 'const tr=s=>(window.DARTS_RT||{})[s]||s;const esc=s=>'],
+    ["hSound?'Ansage aus':'Ansage an'", "hSound?'Omroep uit':'Omroep aan'"],
     ['Die WM 2026/27 ist vorbei – danke fürs Mitfiebern!', 'Het WK 2026/27 zit erop – bedankt voor het meeleven!'],
     ['Die WM läuft! Finale am Sonntag, 3. Januar, im Alexandra Palace.', 'Het WK is begonnen! Finale op zondag 3 januari in Alexandra Palace.'],
     ["{c:'',n:'1. Runde',bo:'Best of 5',sp:'11.–19. Dez · 64 Spiele',d:[['Fr 11.12.','20:00','2026-12-11'],['Sa 12.12.',two,'2026-12-12'],['So 13.12.',two,'2026-12-13'],['Mo 14.12.','20:00','2026-12-14'],['Di 15.12.',two,'2026-12-15'],['Mi 16.12.',two,'2026-12-16'],['Do 17.12.',two,'2026-12-17'],['Fr 18.12.',two,'2026-12-18'],['Sa 19.12.',two,'2026-12-19']]}", "{c:'',n:'1e ronde',bo:'Best of 5',sp:'11–19 dec · 64 partijen',d:[['vr 11 dec','20:00','2026-12-11'],['za 12 dec',two,'2026-12-12'],['zo 13 dec',two,'2026-12-13'],['ma 14 dec','20:00','2026-12-14'],['di 15 dec',two,'2026-12-15'],['wo 16 dec',two,'2026-12-16'],['do 17 dec',two,'2026-12-17'],['vr 18 dec',two,'2026-12-18'],['za 19 dec',two,'2026-12-19']]}"],
