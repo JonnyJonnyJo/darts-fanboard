@@ -24,18 +24,23 @@
   var T = {
     de: { title: 'Darts aktuell als App', sub: 'Kostenlos · Live-Ergebnisse & Tippspiel', btn: 'App holen', close: 'Schließen', foot: '📲 App aufs Handy',
       iosH: 'So kommt die App auf dein iPhone', ios1: 'Tippe unten (oder oben) auf das Teilen-Symbol', ios2: 'Wähle „Zum Home-Bildschirm“ (evtl. etwas nach unten wischen)', ios3: 'Tippe oben rechts auf „Hinzufügen“ – fertig!',
-      gH: 'So kommt die App auf dein Handy', g1: 'Öffne das Browser-Menü (⋮ oder ☰)', g2: 'Wähle „App installieren“ oder „Zum Startbildschirm hinzufügen“', g3: 'Bestätigen – das Darts-aktuell-Icon liegt jetzt auf deinem Handy', ok: 'Alles klar', done: 'Installiert ✓' },
+      gH: 'So kommt die App auf dein Handy', g1: 'Öffne das Browser-Menü (⋮ oder ☰)', g2: 'Wähle „App installieren“ oder „Zum Startbildschirm hinzufügen“', g3: 'Bestätigen – das Darts-aktuell-Icon liegt jetzt auf deinem Handy', ok: 'Alles klar', done: 'Installiert ✓',
+      inH: 'Erst in Safari öffnen', in1: 'Du bist gerade in einer App (z. B. Google, Instagram, TikTok). Dort fehlt „Zum Home-Bildschirm“.', in2: 'Tippe auf ⋯ bzw. das Teilen-Symbol und wähle „In Safari öffnen“ (oder „Im Browser öffnen“)', in3: 'In Safari: Teilen-Symbol → „Zum Home-Bildschirm“ → „Hinzufügen“', copy: 'Link kopieren', copied: 'Link kopiert – jetzt in Safari einfügen ✓' },
     en: { title: 'Get Darts aktuell as an app', sub: 'Free · live scores & predictor', btn: 'Get the app', close: 'Close', foot: '📲 Install the app',
       iosH: 'Add the app to your iPhone', ios1: 'Tap the Share icon at the bottom (or top)', ios2: 'Choose “Add to Home Screen” (scroll down a little if needed)', ios3: 'Tap “Add” in the top right – done!',
-      gH: 'Add the app to your phone', g1: 'Open the browser menu (⋮ or ☰)', g2: 'Choose “Install app” or “Add to Home screen”', g3: 'Confirm – the Darts aktuell icon is now on your phone', ok: 'Got it', done: 'Installed ✓' },
+      gH: 'Add the app to your phone', g1: 'Open the browser menu (⋮ or ☰)', g2: 'Choose “Install app” or “Add to Home screen”', g3: 'Confirm – the Darts aktuell icon is now on your phone', ok: 'Got it', done: 'Installed ✓',
+      inH: 'Open in Safari first', in1: 'You are inside an app (e.g. Google, Instagram, TikTok), which has no “Add to Home Screen”.', in2: 'Tap ⋯ or the Share icon and choose “Open in Safari” (or “Open in browser”)', in3: 'In Safari: Share icon → “Add to Home Screen” → “Add”', copy: 'Copy link', copied: 'Link copied – paste it into Safari ✓' },
     nl: { title: 'Darts aktuell als app', sub: 'Gratis · live-uitslagen & poule', btn: 'App installeren', close: 'Sluiten', foot: '📲 App op je telefoon',
       iosH: 'Zo zet je de app op je iPhone', ios1: 'Tik onderaan (of bovenaan) op het deel-icoon', ios2: 'Kies „Zet op beginscherm” (eventueel iets naar beneden scrollen)', ios3: 'Tik rechtsboven op „Voeg toe” – klaar!',
-      gH: 'Zo zet je de app op je telefoon', g1: 'Open het browsermenu (⋮ of ☰)', g2: 'Kies „App installeren” of „Toevoegen aan startscherm”', g3: 'Bevestig – het Darts-aktuell-icoon staat nu op je telefoon', ok: 'Begrepen', done: 'Geïnstalleerd ✓' }
+      gH: 'Zo zet je de app op je telefoon', g1: 'Open het browsermenu (⋮ of ☰)', g2: 'Kies „App installeren” of „Toevoegen aan startscherm”', g3: 'Bevestig – het Darts-aktuell-icoon staat nu op je telefoon', ok: 'Begrepen', done: 'Geïnstalleerd ✓',
+      inH: 'Eerst openen in Safari', in1: 'Je zit nu in een app (bijv. Google, Instagram, TikTok). Daar ontbreekt „Zet op beginscherm”.', in2: 'Tik op ⋯ of het deel-icoon en kies „Open in Safari” (of „Open in browser”)', in3: 'In Safari: deel-icoon → „Zet op beginscherm” → „Voeg toe”', copy: 'Link kopiëren', copied: 'Link gekopieerd – plak hem in Safari ✓' }
   }[lang] || null;
   if (!T) return;
 
   var ua = navigator.userAgent || '';
   var isIOS = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  // In-App-Browser (Google-App, Instagram, Facebook, TikTok, Snapchat …) können auf dem iPhone nichts zum Home-Bildschirm legen
+  var inApp = isIOS && /GSA\/|FBAN|FBAV|FB_IAB|Instagram|musical_ly|BytedanceWebview|TikTok|Snapchat|Line\/|LinkedInApp|Twitter|Pinterest/i.test(ua);
   var mobile = isIOS || /android|mobile/i.test(ua);
   var deferred = null;
 
@@ -59,14 +64,19 @@
   function howTo() {
     var m = el('div', 'pwa-m'), c = el('div', 'pwa-c');
     m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true');
-    c.innerHTML = isIOS
+    if (inApp) {
+      c.innerHTML = '<h2>' + T.inH + '</h2><p style="margin:0 0 14px">' + T.in1 + '</p><ol><li><span>' + T.in2 + '</span></li><li>' + share + '<span>' + T.in3 + '</span></li></ol>';
+      var cp = el('button', 'pwa-go', T.copy); cp.type = 'button'; cp.style.marginBottom = '10px';
+      cp.onclick = function () { var u = 'https://dartsaktuell.com/'; (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject()).then(function () { cp.textContent = T.copied; }).catch(function () { cp.textContent = u; }); };
+      c.appendChild(cp);
+    } else c.innerHTML = isIOS
       ? '<h2>' + T.iosH + '</h2><ol><li>' + share + '<span>' + T.ios1 + '</span></li><li>' + plus + '<span>' + T.ios2 + '</span></li><li><span>' + T.ios3 + '</span></li></ol>'
       : '<h2>' + T.gH + '</h2><ol><li><span>' + T.g1 + '</span></li><li><span>' + T.g2 + '</span></li><li><span>' + T.g3 + '</span></li></ol>';
     var ok = el('button', 'pwa-go', T.ok); ok.type = 'button';
     var shut = function () { m.remove(); };
     ok.onclick = shut; m.onclick = function (e) { if (e.target === m) shut(); };
     c.appendChild(ok); m.appendChild(c); d.body.appendChild(m); ok.focus();
-    ping('/_app/anleitung');
+    ping(inApp ? '/_app/anleitung-inapp' : '/_app/anleitung');
   }
 
   function install() {
