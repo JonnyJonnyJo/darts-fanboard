@@ -2,12 +2,12 @@
 /* VOICE: Ally-Pally-Abend, sportlich und frisch – Variante B „Board-Grün“.
    IDEA: Die Seite ist ein Dartboard mit Anzeigetafel: Board-Grün, Sisal-Creme, Treble-Rot.
    PICTURE: Ein großes, klickbares Board, das gleichzeitig der 501-Scorer ist.
-   COLOUR and TYPE: Grün dominant, Creme als Fläche, Rot als Akzent, Gelb für Highlights; Oswald + Barlow.
+   COLOUR and TYPE: Schwarz/Anthrazit für Kopf und Bänder, Grün als Akzent, Creme als Fläche, Rot als Akzent, Gelb für Highlights; Oswald + Barlow.
    LAYOUT: Grünes Band oben (Countdown, Board, Tafel), dann Spielplan als Weg in sechs Etappen, Checkout, Fakten, Weltmeister. */
 :root{color-scheme:light dark;
-  --bg:light-dark(#f7f1e3,#0f1a13);--ink:light-dark(#141714,#efe7d3);--soft:light-dark(#5b5b52,#b5ad98);
-  --card:light-dark(#fffaf0,#16241b);--line:light-dark(#e3d9c2,#2a3d30);
-  --night:#136b3a;--night2:#0e5530;--deep:#0b4426;--edge:#1d7a47;--sisal:#efe3c4;--red:#e1262f;--green:#136b3a;--gold:#ffd54a;--nink:#ffffff;--nsoft:#cfe6d6}
+  --bg:light-dark(#f7f1e3,#0e100f);--ink:light-dark(#141714,#efe7d3);--soft:light-dark(#5b5b52,#b5ad98);
+  --card:light-dark(#fffaf0,#181c1a);--line:light-dark(#e3d9c2,#2e3531);
+  --night:#141816;--night2:#1e2420;--deep:#0b0d0c;--edge:#2c3530;--sisal:#efe3c4;--red:#e1262f;--green:#136b3a;--gold:#ffd54a;--nink:#ffffff;--nsoft:#cdd6d0}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Barlow,system-ui,sans-serif;overflow-x:clip}
