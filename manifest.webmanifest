@@ -2,6 +2,7 @@
   "name": "Darts aktuell – News, WM-Spielplan & Tippspiel",
   "short_name": "Darts aktuell",
   "description": "Darts-News, WM 2026/27 Spielplan, Tippspiel, Checkout-Rechner und Punkte-Rechner.",
+  "id": "/",
   "lang": "de-DE",
   "start_url": "/?app=1",
   "scope": "/",
