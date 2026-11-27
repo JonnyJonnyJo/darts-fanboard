@@ -45,8 +45,9 @@ nav .links a:hover{color:var(--nink);background:var(--night2)}
 .play{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:clamp(20px,3vw,44px);align-items:start}
 .boardbox{position:relative;aspect-ratio:1;max-width:620px;width:100%;justify-self:center}
 .boardbox svg{width:100%;height:100%;display:block;filter:drop-shadow(0 24px 40px rgba(0,0,0,.55))}
-.seg{cursor:pointer;transition:filter .12s}
-.seg:hover{filter:brightness(1.45)}
+.seg{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.vis{transition:filter .12s}
+.vis.hov{filter:brightness(1.45)}
 .hit{animation:pop .35s ease-out}
 @keyframes pop{0%{opacity:.9;r:4}100%{opacity:0;r:26}}
 .boardctl{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px}

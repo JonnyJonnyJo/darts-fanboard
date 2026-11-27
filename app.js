@@ -96,20 +96,28 @@ const wedge=(r1,r2,a1,a2)=>{const[x1,y1]=P(r2,a1),[x2,y2]=P(r2,a2),[x3,y3]=P(r1,
 const RINGS=[[16,99,1,'S'],[99,107,3,'T'],[107,162,1,'S'],[162,170,2,'D']];
 let svg=`<defs><radialGradient id="rim" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#2a2a2a"/><stop offset="1" stop-color="#050505"/></radialGradient><radialGradient id="shine" cx="35%" cy="25%" r="75%"><stop offset="0" stop-color="#fff" stop-opacity=".14"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>
 <circle r="226" fill="url(#rim)"/><circle r="226" fill="none" stroke="#3a3a3a" stroke-width="2"/>`;
+/* Sichtbare Felder (nur Optik) und darüber unsichtbare Trefferflächen: Doppel-, Triple- und Bull-Felder sind zum Antippen doppelt so breit wie sie aussehen */
+const HIT={S1:[19,95],T:[95,111],S2:[111,158],D:[158,174]};
+let hits='',vid=0;
 ORDER.forEach((n,i)=>{
   const a1=(i*18-9)*Math.PI/180,a2=(i*18+9)*Math.PI/180,even=i%2===0;
-  for(const[r1,r2,m,t]of RINGS){
-    const col=m===1?(even?'#141414':'#efe3c4'):(even?'#e1262f':'#1d8a4b');
-    svg+=`<path class="seg" d="${wedge(r1,r2,a1,a2)}" fill="${col}" data-v="${n*m}" data-l="${t==='S'?n:t+n}" data-k="${t.toLowerCase()}"><title>${t==='S'?'Single '+n:(t==='D'?'Double ':'Treble ')+n}</title></path>`;
-  }
+  RINGS.forEach(([r1,r2,m,t],ri)=>{
+    const col=m===1?(even?'#141414':'#efe3c4'):(even?'#e1262f':'#1d8a4b'),id='v'+(vid++);
+    svg+=`<path class="vis" id="${id}" d="${wedge(r1,r2,a1,a2)}" fill="${col}" pointer-events="none"/>`;
+    const[h1,h2]=HIT[ri===0?'S1':ri===2?'S2':t];
+    hits+=`<path class="seg" d="${wedge(h1,h2,a1,a2)}" fill="#000" fill-opacity="0" data-vis="${id}" data-v="${n*m}" data-l="${t==='S'?n:t+n}" data-k="${t.toLowerCase()}"><title>${t==='S'?'Single '+n:(t==='D'?'Double ':'Treble ')+n}</title></path>`;
+  });
   const[x,y]=P(196,i*18*Math.PI/180);
   svg+=`<text x="${x}" y="${y}" fill="#efe3c4" font-family="Oswald,Impact,sans-serif" font-weight="700" font-size="24" text-anchor="middle" dominant-baseline="central" pointer-events="none">${n}</text>`;
 });
-svg+=`<circle class="seg" r="16" fill="#1d8a4b" data-v="25" data-l="25" data-k="s"><title>Single Bull 25</title></circle>
-<circle class="seg" r="6.4" fill="#e1262f" data-v="50" data-l="Bull" data-k="d"><title>Bullseye 50</title></circle>
+svg+=`<circle class="vis" id="vbo" r="16" fill="#1d8a4b" pointer-events="none"/><circle class="vis" id="vbi" r="6.4" fill="#e1262f" pointer-events="none"/>
 <g fill="none" stroke="#b9b9b9" stroke-opacity=".55" stroke-width=".9" pointer-events="none">${[6.4,16,99,107,162,170].map(r=>`<circle r="${r}"/>`).join('')}${ORDER.map((n,i)=>{const a=(i*18-9)*Math.PI/180,[x1,y1]=P(16,a),[x2,y2]=P(170,a);return`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`}).join('')}</g>
-<circle r="226" fill="url(#shine)" pointer-events="none"/><g id="marks" pointer-events="none"></g>`;
+<circle r="226" fill="url(#shine)" pointer-events="none"/>
+<g id="hits">${hits}<circle class="seg" r="19" fill="#000" fill-opacity="0" data-vis="vbo" data-v="25" data-l="25" data-k="s"><title>Single Bull 25</title></circle><circle class="seg" r="9.05" fill="#000" fill-opacity="0" data-vis="vbi" data-v="50" data-l="Bull" data-k="d"><title>Bullseye 50</title></circle></g>
+<g id="marks" pointer-events="none"></g>`;
 $('board').innerHTML=svg;
+$('board').addEventListener('pointerover',e=>{const t=e.target.closest('.seg');document.querySelectorAll('#board .vis.hov').forEach(x=>x.classList.remove('hov'));if(t&&t.dataset.vis){const v=document.getElementById(t.dataset.vis);if(v)v.classList.add('hov')}});
+$('board').addEventListener('pointerleave',()=>document.querySelectorAll('#board .vis.hov').forEach(x=>x.classList.remove('hov')));
 
 /* ---------- Scorer (1–4 Spieler) ---------- */
 const KEY='allyPallyScorer1';
