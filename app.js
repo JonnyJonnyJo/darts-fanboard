@@ -117,6 +117,30 @@ svg+=`<circle class="vis" id="vbo" r="16" fill="#1d8a4b" pointer-events="none"/>
 <g id="marks" pointer-events="none"></g>`;
 $('board').innerHTML=svg;
 $('board').addEventListener('pointerover',e=>{const t=e.target.closest('.seg');document.querySelectorAll('#board .vis.hov').forEach(x=>x.classList.remove('hov'));if(t&&t.dataset.vis){const v=document.getElementById(t.dataset.vis);if(v)v.classList.add('hov')}});
+/* Trefferanzeige: große durchsichtige Zahl auf der Scheibe (1 s) + Sprachansage */
+const HLANG=(document.documentElement.lang||'de').slice(0,2);
+const HSAY={de:{D:'Doppel ',T:'Triple ',bull:'Bull',miss:'Daneben',vl:'de-DE'},en:{D:'Double ',T:'Treble ',bull:'Bullseye',miss:'No score',vl:'en-GB'},nl:{D:'Dubbel ',T:'Triple ',bull:'Bull',miss:'Mis',vl:'nl-NL'}}[HLANG]||{D:'Doppel ',T:'Triple ',bull:'Bull',miss:'Daneben',vl:'de-DE'};
+const HICON={on:'<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 4V5L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg>',off:'<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 4V5L7 9H3zm13.6 3 2.7-2.7-1.4-1.4-2.7 2.7-2.7-2.7-1.4 1.4 2.7 2.7-2.7 2.7 1.4 1.4 2.7-2.7 2.7 2.7 1.4-1.4z"/></svg>'};
+let hSound=true;try{hSound=localStorage.getItem('dartsSay')!=='0'}catch(_){}
+const bbox=$('board').parentElement;
+const hFlash=document.createElement('div');hFlash.className='hitflash';hFlash.setAttribute('aria-hidden','true');bbox.appendChild(hFlash);
+const hBtn=document.createElement('button');hBtn.type='button';hBtn.className='saybtn';
+const hBtnSet=()=>{hBtn.innerHTML=hSound?HICON.on:HICON.off;hBtn.setAttribute('aria-pressed',hSound);hBtn.setAttribute('aria-label',hSound?'Ansage aus':'Ansage an');hBtn.title=hBtn.getAttribute('aria-label')};
+hBtnSet();bbox.appendChild(hBtn);
+hBtn.addEventListener('click',()=>{hSound=!hSound;try{localStorage.setItem('dartsSay',hSound?'1':'0')}catch(_){}hBtnSet();if(!hSound&&window.speechSynthesis)speechSynthesis.cancel()});
+let hVoice=null;const hPick=()=>{try{const vs=speechSynthesis.getVoices();hVoice=vs.find(v=>v.lang===HSAY.vl)||vs.find(v=>v.lang&&v.lang.slice(0,2)===HLANG)||null}catch(_){}};
+if(window.speechSynthesis){hPick();speechSynthesis.addEventListener?.('voiceschanged',hPick)}
+let hT=0;
+const showHit=d=>{
+  const l=String(d.l),miss=d.v===0;
+  hFlash.textContent=miss?'0':l;
+  hFlash.className='hitflash '+(miss?'k-m':'k-'+d.k);
+  void hFlash.offsetWidth;hFlash.classList.add('on');
+  clearTimeout(hT);hT=setTimeout(()=>hFlash.classList.remove('on'),1000);
+  if(!hSound||!window.speechSynthesis)return;
+  let txt=miss?HSAY.miss:l==='Bull'?HSAY.bull:/^D/.test(l)?HSAY.D+l.slice(1):/^T/.test(l)?HSAY.T+l.slice(1):l;
+  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);u.lang=HSAY.vl;if(hVoice)u.voice=hVoice;u.rate=1.08;speechSynthesis.speak(u)}catch(_){}
+};
 $('board').addEventListener('pointerleave',()=>document.querySelectorAll('#board .vis.hov').forEach(x=>x.classList.remove('hov')));
 
 /* ---------- Scorer (1–4 Spieler) ---------- */
@@ -257,7 +281,7 @@ if($('pstats')&&PT){
 
 const endVisit=()=>{S.visit=[];S.cur=nxt(S.cur)};
 const throwDart=(d,ev)=>{
-  snap();S.msg='';S.seq++;
+  showHit(d);snap();S.msg='';S.seq++;
   const p=S.cur,before=S.rest[p]-S.visit.reduce((a,x)=>a+x.v,0),after=before-d.v;
   S.visit.push(d);S.darts[p]++;
   if(after<0||after===1||(after===0&&d.k!=='d')){

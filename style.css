@@ -502,3 +502,11 @@ nav .links a.navlive::before{content:"";display:inline-block;width:8px;height:8p
 .padmod button[data-m="3"].on{border-color:transparent;box-shadow:none}
 .pad .padact{font-size:12px}
 @media(max-width:900px){.pad button{min-height:46px}}
+
+.hitflash{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;font-family:Oswald,Impact,sans-serif;font-weight:700;font-size:clamp(84px,24vw,190px);line-height:1;color:#fff;opacity:0;transform:scale(.7);text-shadow:0 4px 30px rgba(0,0,0,.6);z-index:2}
+.hitflash.k-d{-webkit-text-stroke:3px #e1262f}.hitflash.k-t{-webkit-text-stroke:3px #1d8a4b}.hitflash.k-m{color:#ddd}
+.hitflash.on{animation:hitpop 1s ease-out forwards}
+@keyframes hitpop{0%{opacity:0;transform:scale(.6)}12%{opacity:.6;transform:scale(1.05)}25%{transform:scale(1)}70%{opacity:.55}100%{opacity:0;transform:scale(1.08)}}
+.saybtn{position:absolute;top:4px;right:4px;z-index:3;width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.45);color:#fff;display:grid;place-items:center;cursor:pointer;padding:0}
+.saybtn[aria-pressed="false"]{opacity:.6}
+@media (prefers-reduced-motion:reduce){.hitflash.on{animation:none;opacity:.55;transform:none}}
