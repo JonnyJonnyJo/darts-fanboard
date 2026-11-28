@@ -723,7 +723,7 @@ write('404.html', page({ title: 'Seite nicht gefunden | Darts aktuell', desc: 'D
   ];
   for (const P of DH) {
     write(P.url.slice(1) + 'index.html', pageFn({ title: P.title, desc: P.desc, url: P.url, ld: [crumbs([['Darts aktuell', '/'], [P.h1.replace(/<[^>]+>/g, ''), P.url]]), ...P.ld] },
-      intro(P.h1, P.lead, crumbNav([['Startseite', '/'], [P.h1.replace(/<[^>]+>/g, ''), P.url]]), [P.url, P.title.replace(' | Darts aktuell', '') + ' 🎯']) + `<section class="band"><div class="wrap dh">${links(P.url)}${stand}${P.body}${tippPromo}</div></section>`, []));
+      intro(P.h1, P.lead, crumbNav([['Startseite', '/'], [P.h1.replace(/<[^>]+>/g, ''), P.url]]), [P.url, P.title.replace(' | Darts aktuell', '') + ' 🎯']) + `<section class="band"><div class="wrap dh">${stand}${P.body}${tippPromo}<div class="dh-more"><h2>Mehr Darts für heute</h2>${links(P.url)}</div></div></section>`, []));
     pages.push({ url: P.url, pri: '0.9', freq: 'hourly' });
   }
   // Startseite: Block „Heute bei der WM“
@@ -747,7 +747,7 @@ write('404.html', page({ title: 'Seite nicht gefunden | Darts aktuell', desc: 'D
   // Startseite: Schnellzugriff auf die Tagesseiten
   const ip = path.join(OUT, 'index.html');
   if (fs.existsSync(ip)) { const h = fs.readFileSync(ip, 'utf8'); const hook = '<section class="hero band" id="news"><div class="wrap">';
-    if (h.includes(hook)) fs.writeFileSync(ip, h.replace(hook, hook + links('') + wmToday()));
+    if (h.includes(hook)) { let x = h.replace(hook, hook + wmToday()); const fi = x.lastIndexOf('<footer'); if (fi > 0) x = x.slice(0, fi) + `<section class="band dh-foot"><div class="wrap"><h2>Darts heute &amp; mehr</h2>${links('')}</div></section>\n` + x.slice(fi); fs.writeFileSync(ip, x); }
   }
 }
 
