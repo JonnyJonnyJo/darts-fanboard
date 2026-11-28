@@ -521,3 +521,11 @@ nav .links a.navlive::before{content:"";display:inline-block;width:8px;height:8p
 .wm-sess{margin:14px 0 6px;font-size:.95rem;color:#f3c63f}
 .wm-ger{margin-bottom:22px}.wm-tv{font-size:.9rem;opacity:.85}
 tr.de td{background:rgba(243,198,63,.08)}
+
+/* Mobil: in der Kopfzeile nur ein dezenter Teilen-Knopf (öffnet das Teilen-Menü des Handys) */
+@media (max-width:700px){
+  .hero .share{margin:10px 0 0;gap:0}
+  .hero .share .share-l,.hero .share .sh-wa,.hero .share .sh-x,.hero .share .sh-fb,.hero .share .sh-tg{display:none}
+  .hero .share .sh-more{min-height:32px;padding:0 12px;font-size:13px;opacity:.75;background:transparent;border:1px solid rgba(255,255,255,.35)}
+  .hero .share .sh-more::before{content:'';width:14px;height:14px;margin-right:6px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M18 16a3 3 0 0 0-2.4 1.2l-6.7-3.4a3 3 0 0 0 0-1.6l6.7-3.4A3 3 0 1 0 15 7l-6.7 3.4a3 3 0 1 0 0 3.2L15 17a3 3 0 1 0 3-1z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M18 16a3 3 0 0 0-2.4 1.2l-6.7-3.4a3 3 0 0 0 0-1.6l6.7-3.4A3 3 0 1 0 15 7l-6.7 3.4a3 3 0 1 0 0 3.2L15 17a3 3 0 1 0 3-1z'/%3E%3C/svg%3E") center/contain no-repeat}
+}
