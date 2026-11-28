@@ -112,7 +112,7 @@ footer{background:var(--night);color:var(--nsoft);font-size:14px}
 .newshead h1 span{color:var(--gold)}
 .newshead p{margin:8px 0 0;color:var(--nsoft);font-size:18px}
 .newsgrid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:20px;margin-top:24px;align-items:stretch}
-.lead{background:var(--night2);border:1px solid var(--edge);border-radius:20px;padding:clamp(20px,3vw,36px);display:flex;flex-direction:column;justify-content:center;gap:14px}
+.lead{background:var(--green);border:1px solid #1d7a47;border-radius:20px;padding:clamp(20px,3vw,36px);display:flex;flex-direction:column;justify-content:center;gap:14px}
 .lead h2{font-size:clamp(30px,4vw,48px);color:#fff;text-transform:none}
 .lead p{margin:0;font-size:18px;color:#e6f2ea;max-width:60ch}
 .lead .src a{color:var(--gold)}
@@ -511,7 +511,7 @@ nav .links a.navlive::before{content:"";display:inline-block;width:8px;height:8p
 .saybtn[aria-pressed="false"]{opacity:.6}
 @media (prefers-reduced-motion:reduce){.hitflash.on{animation:none;opacity:.55;transform:none}}
 
-.wm-today{background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:16px 18px;margin:14px 0 18px}
+.wm-today{background:var(--green);border:1px solid #1d7a47;border-radius:16px;padding:16px 18px;margin:14px 0 18px}
 .wm-today h2{margin:0 0 8px;font-size:1.35rem;color:#fff}.wm-today h2 span{color:#f3c63f}
 .wm-today h3{font-size:.95rem;margin:12px 0 6px;color:#f3c63f;text-transform:uppercase;letter-spacing:.04em}
 .wm-today ul{list-style:none;margin:0;padding:0}.wm-today li{padding:6px 0;border-bottom:1px solid rgba(255,255,255,.08)}

@@ -64,58 +64,7 @@
     ]);
     if (q.error || m.error || l.error) throw (q.error || m.error || l.error);
     questions = q.data; matches = m.data; board = l.data;
-    if (!oomLoaded) { oomLoaded = true; sb.from('order_of_merit').select('player').order('rank').limit(200).then(r => { if (r.data) addPlayers(r.data.map(x => x.player)); }, () => {}); }
-    addPlayers(matches.flatMap(x => [x.player1, x.player2]));
   }
-
-  /* ---------- Spieler-Vorschläge (eigenes Dropdown statt <datalist>, funktioniert auch auf dem iPhone) ---------- */
-  let oomLoaded = false;
-  const PLAYERS = [];
-  const norm = t => String(t || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/ß/g, 'ss');
-  function addPlayers(list) { for (const n of list) if (n && !/^(N\.?N\.?|TBA|tbd)$/i.test(n) && !PLAYERS.some(p => p.n === n)) PLAYERS.push({ n, k: norm(n) }); }
-  addPlayers([...document.querySelectorAll('#tPlayers option')].map(o => o.value || o.textContent));
-  addPlayers(['Luke Littler', 'Luke Humphries', 'Gian van Veen', 'Michael van Gerwen', 'Gerwyn Price', 'Stephen Bunting', 'Jonny Clayton', 'Josh Rock', 'Danny Noppert', 'Rob Cross', 'Chris Dobey', 'Damon Heta', 'James Wade', 'Gary Anderson', 'Ryan Searle', 'Nathan Aspinall', 'Peter Wright', 'Michael Smith', 'Dave Chisnall', 'Joe Cullen', 'Dimitri Van den Bergh', 'Ross Smith', 'Martin Schindler', 'Gabriel Clemens', 'Ricardo Pietreczko', 'Niko Springer', 'Mike De Decker', 'Wessel Nijman', 'Dirk van Duijvenbode', 'Ritchie Edhouse', 'Cameron Menzies', 'Krzysztof Ratajski', 'Daryl Gurney', 'Andrew Gilding', 'Kevin Doets', 'Luke Woodhouse', 'Beau Greaves', 'Callan Rydz', 'Jermaine Wattimena', 'Raymond van Barneveld', 'Max Hopp']);
-  function acFind(q) {
-    const k = norm(q).trim(); if (!k) return PLAYERS.slice(0, 8);
-    const toks = k.split(/\s+/);
-    return PLAYERS.map((p, i) => {
-      const words = p.k.split(/[\s-]+/);
-      if (!toks.every(t => words.some(w => w.startsWith(t)) || p.k.includes(t))) return null;
-      const score = p.k.startsWith(k) ? 0 : words.some(w => w.startsWith(toks[0])) ? 1 : 2;
-      return { p, s: score * 1000 + i };
-    }).filter(Boolean).sort((a, b) => a.s - b.s).slice(0, 8).map(x => x.p);
-  }
-  function acHi(n, q) { // Treffer fett hervorheben
-    const k = norm(q).trim(); if (!k) return esc(n);
-    const nk = norm(n), t = k.split(/\s+/)[0];
-    let i = nk.indexOf(k), len = k.length;
-    if (i < 0) { len = t.length; i = nk.startsWith(t) ? 0 : -1; for (let j = 1; i < 0 && j < nk.length; j++) if (/[\s-]/.test(nk[j - 1]) && nk.startsWith(t, j)) i = j; if (i < 0) i = nk.indexOf(t); }
-    if (i < 0 || nk.length !== n.length) return esc(n);
-    return esc(n.slice(0, i)) + '<b>' + esc(n.slice(i, i + len)) + '</b>' + esc(n.slice(i + len));
-  }
-  function acOpen(inp) {
-    const ul = $(inp.getAttribute('aria-controls')); if (!ul) return;
-    const res = acFind(inp.value);
-    if (!res.length || (res.length === 1 && res[0].n === inp.value)) return acClose(inp);
-    ul.innerHTML = res.map((p, i) => `<li role="option" id="${ul.id}-${i}" data-v="${esc(p.n)}"${i === 0 && inp.value ? ' aria-selected="true"' : ''}>${acHi(p.n, inp.value)}</li>`).join('');
-    ul.hidden = false; inp.setAttribute('aria-expanded', 'true');
-  }
-  function acClose(inp) { const ul = $(inp.getAttribute('aria-controls')); if (ul) { ul.hidden = true; ul.innerHTML = ''; } inp.setAttribute('aria-expanded', 'false'); inp.removeAttribute('aria-activedescendant'); }
-  function acPick(inp, v) { inp.value = v; acClose(inp); inp.dispatchEvent(new Event('change', { bubbles: true })); }
-  document.addEventListener('input', e => { if (e.target.matches && e.target.matches('[data-ac]')) acOpen(e.target); });
-  document.addEventListener('focusin', e => { if (e.target.matches && e.target.matches('[data-ac]')) acOpen(e.target); });
-  document.addEventListener('focusout', e => { if (e.target.matches && e.target.matches('[data-ac]')) setTimeout(() => acClose(e.target), 150); });
-  document.addEventListener('pointerdown', e => { const li = e.target.closest && e.target.closest('.ac-list li'); if (!li) return; e.preventDefault(); acPick(li.closest('.ac').querySelector('[data-ac]'), li.dataset.v); });
-  document.addEventListener('keydown', e => {
-    const inp = e.target; if (!inp.matches || !inp.matches('[data-ac]')) return;
-    const ul = $(inp.getAttribute('aria-controls')); if (!ul || ul.hidden) { if (e.key === 'ArrowDown') { acOpen(inp); e.preventDefault(); } return; }
-    const items = [...ul.children], cur = items.findIndex(li => li.getAttribute('aria-selected') === 'true');
-    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-      e.preventDefault(); const n = (cur + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
-      items.forEach((li, i) => li.setAttribute('aria-selected', i === n ? 'true' : 'false')); inp.setAttribute('aria-activedescendant', items[n].id); items[n].scrollIntoView({ block: 'nearest' });
-    } else if (e.key === 'Enter' && cur >= 0) { e.preventDefault(); acPick(inp, items[cur].dataset.v); }
-    else if (e.key === 'Escape') acClose(inp);
-  });
   async function loadMine() {
     myM = {}; myB = {};
     if (!LIVE) { const d = store.get(); profile = d.name ? {display_name:d.name} : null; myB = d.b || {}; myM = d.m || {}; return; }
@@ -271,8 +220,13 @@
       const opts = Array.isArray(q.options) ? q.options : [];
       const input = q.kind === 'select'
         ? `<select id="bq${q.id}" ${dis}><option value="">Bitte wählen</option>${opts.map(o => `<option${o === v ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select>`
-        : q.kind === 'number' ? `<input id="bq${q.id}" type="number" min="0" max="99" inputmode="numeric" value="${esc(v)}" ${dis}>`
-        : `<div class="ac"><input id="bq${q.id}" data-ac maxlength="60" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="bq${q.id}l" value="${esc(v)}" ${dis}><ul class="ac-list" id="bq${q.id}l" role="listbox" hidden></ul></div>`;
+        : (() => { // Dropdown auch für Spieler- und Zahlenfragen
+            let list = q.kind === 'number' ? Array.from({ length: 16 }, (_, i) => String(i)).concat(['16+'])
+              : [...new Set([...matches.flatMap(m => [m.player1, m.player2]), ...[...document.querySelectorAll('#tPlayers option')].map(o => o.value || o.textContent)].filter(n => n && !/^(tbd|tba|offen)$/i.test(n)))];
+            if (q.kind !== 'number') list = list.sort((a, b) => a.localeCompare(b, 'de'));
+            if (v && !list.includes(v)) list.unshift(v);
+            return `<select id="bq${q.id}" ${dis}><option value="">${q.kind === 'number' ? 'Anzahl wählen' : 'Spieler wählen'}</option>${list.map(o => `<option${o === v ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
+          })();
       const res = q.answer ? `<span class="tres">Lösung: ${esc(q.answer.split('|')[0])}</span>` : '';
       return `<div class="tq"><label for="bq${q.id}">${esc(q.question)} <span class="tpts">${q.points} P.</span></label>${input}<span class="note">${open ? 'Tippschluss ' + fmt(q.locks_at) : 'Tippschluss vorbei'}</span>${res}</div>`;
     }).join('');
