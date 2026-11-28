@@ -787,3 +787,8 @@ if (process.env.CI) {
   } catch (err) { console.warn('IndexNow-Liste übersprungen:', err.message); }
 }
 console.log(`Fertig: ${pages.length} Seiten in der Sitemap.`);
+
+// Spielerliste fürs Tippspiel-Dropdown (Weltrangliste + WM-Feld), alle Sprachen
+{ const names = [...new Set([...oom.slice(0, 160).map(r => r.player), ...data.matches.flatMap(m => [m.player1, m.player2])].filter(n => n && !/^(tbd|tba|offen)$/i.test(n)))];
+  for (const f of ['index.html', 'en/index.html', 'nl/index.html']) { const ip0 = path.join(OUT, f); if (!fs.existsSync(ip0)) continue;
+    const h0 = fs.readFileSync(ip0, 'utf8'); fs.writeFileSync(ip0, h0.replace(/<datalist id="tPlayers">[\s\S]*?<\/datalist>/, `<datalist id="tPlayers">${names.map(n => `<option>${esc(n)}</option>`).join('')}</datalist>`)); } }
