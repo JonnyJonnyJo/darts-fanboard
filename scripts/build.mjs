@@ -24,7 +24,21 @@ const PAGERS = {};
 const rd = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const safeUrl = u => /^https?:\/\//i.test(String(u || '')) ? String(u) : '';
-const write = (rel, content) => { const p = path.join(OUT, rel); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, rel.endsWith('.html') ? localize(content) : content); };
+const write = (rel, content) => { const p = path.join(OUT, rel); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, rel.endsWith('.html') ? dhFill(localize(content), rel) : content); };
+/* ---------- „Darts heute“-Links: im Handy-Menü (drei Striche) und ganz unten auf jeder Seite, bei jedem Bau (alle 30 Min.) mit aktuellem Datum ---------- */
+const DH_LINKS = [['/darts-heute/', 'Darts heute'], ['/darts-ergebnisse-heute/', 'Ergebnisse heute'], ['/darts-ergebnisse-gestern/', 'Ergebnisse gestern'], ['/darts-spielplan-heute/', 'Spielplan heute & morgen'], ['/darts-heute-im-tv/', 'Darts heute im TV'], ['/liveticker/', 'Live-Ticker'], ['/darts-fragen/', 'Darts-Fragen']];
+const dhDay = () => new Date().toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'numeric', timeZone: 'Europe/Berlin' });
+const dhDayLong = () => new Date().toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Berlin' });
+function dhFill(html, rel) {
+  if (!html.includes('<!--DH:')) return html;
+  if (/^(en|nl)\//.test(rel)) return html.replace('<!--DH:menu-->', '').replace(/\s*<!--DH:foot-->/, '');
+  const cur = '/' + rel.replace(/index\.html$/, '');
+  const a = ([u, l]) => u === cur ? `<a href="${u}" aria-current="page">${l}</a>` : `<a href="${u}">${l}</a>`;
+  const menu = `<div class="menu-dh"><b>Heute · ${dhDay()}</b>${DH_LINKS.map(a).join('')}</div>`;
+  const foot = `<div class="foot-dh" role="navigation" aria-label="Darts heute"><b class="foot-dh-h">Darts heute · ${dhDayLong()}</b><div class="dh-links">${DH_LINKS.map(a).join('')}</div></div>`;
+  const stamp = new Date().toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Berlin' });
+  return html.replace('<!--DH:menu-->', menu).replace('<!--DH:foot-->', foot).replace(/Turnierdaten Stand [^<]*?\d{4}\./, `Turnierdaten Stand ${stamp}.`);
+}
 
 /* ---------- Daten laden ---------- */
 const cfg = rd('config.js');
@@ -96,7 +110,7 @@ let index = rd('index.html');
 const headEnd = index.indexOf('</head>');
 const head = index.slice(0, headEnd);
 const navStart = index.indexOf('<nav>'), navEnd = index.indexOf('</nav>') + 6;
-const nav = index.slice(navStart, navEnd).replace('</a></div>\n</div></nav>', '</a></div><span class="langsw"><!--LANGSW--></span>\n</div></nav>');
+const nav = index.slice(navStart, navEnd).replace('<!--DH:menu--></div>\n</div></nav>', '<!--DH:menu--></div><span class="langsw"><!--LANGSW--></span>\n</div></nav>');
 if (!nav.includes('<!--LANGSW-->')) console.warn('Sprachumschalter: Platz im Menü nicht gefunden');
 const footStart = index.indexOf('<footer'), footEnd = index.indexOf('</footer>') + 9;
 const footer = index.slice(footStart, footEnd);
@@ -367,7 +381,7 @@ for (const L of Object.values(LANGS)) {
   let tpl = applyPairs(rd('index.html'), L.tpl, `${C}/index.html`);
   const tHead = tpl.slice(0, tpl.indexOf('</head>'));
   const ns = tpl.indexOf('<nav>'), ne = tpl.indexOf('</nav>') + 6;
-  const tNav = tpl.slice(ns, ne).replace('</a></div>\n</div></nav>', '</a></div><span class="langsw"><!--LANGSW--></span>\n</div></nav>').replace('href="/"', `href="/${C}/"`);
+  const tNav = tpl.slice(ns, ne).replace('<!--DH:menu--></div>\n</div></nav>', '<!--DH:menu--></div><span class="langsw"><!--LANGSW--></span>\n</div></nav>').replace('href="/"', `href="/${C}/"`);
   const tFooter = tpl.slice(tpl.indexOf('<footer'), tpl.indexOf('</footer>') + 9);
   const tSection = id => { const m = tpl.match(new RegExp(`<section[^>]*id="${id}"[\\s\\S]*?</div></section>`)); if (!m) throw new Error(`${C}: Abschnitt fehlt: ${id}`); return m[0]; };
   const tBase = tHead.replace(/<title>[\s\S]*?<\/title>\n?/, '').replace(/<meta name="description"[^>]*>\n?/, '').replace(/<link rel="canonical"[^>]*>\n?/, '')
@@ -664,20 +678,41 @@ write('404.html', page({ title: 'Seite nicht gefunden | Darts aktuell', desc: 'D
   const bOf = iso => new Date(iso).toLocaleDateString('sv-SE', { timeZone: TZ });
   const WMTV = 'SPORT1 (Free-TV und kostenloser Stream) und DAZN';
   const rowsFor = d => {
-    const wm = data.matches.filter(m => m.starts_at && bOf(m.starts_at) === d).map(m => ({ event: 'Darts-WM 2026/27', starts_at: m.starts_at, round: m.round, player1: m.player1, player2: m.player2, s1: m.sets1, s2: m.sets2, ls1: m.live_s1, ls2: m.live_s2, fmt: m.best_of ? `Best of ${m.best_of} Sätze` : '', tv: WMTV, note: m.live_note, wm: 1 }));
+    const wm = data.matches.filter(m => m.starts_at && bOf(m.starts_at) === d).map(m => ({ event: 'Darts-WM 2026/27', starts_at: m.starts_at, round: m.round, player1: m.player1, player2: m.player2, s1: m.sets1, s2: m.sets2, ls1: m.live_s1, ls2: m.live_s2, fmt: m.best_of ? `Best of ${m.best_of} Sätze` : '', tv: WMTV, note: m.live_note, wm: 1, ext_key: m.ext_key }));
     return [...wm, ...data.tagesplan.filter(r => r.day === d)];
   };
   const evOn = d => data.events.filter(e => e.start <= d && (e.end || e.start) >= d);
   const nextEv = d => data.events.filter(e => e.start > d).sort((a, b) => a.start.localeCompare(b.start))[0];
   const pl = n => { const p = plMap.get(n); return p ? `<a href="/spieler/${slugify(n)}/">${esc(n)}</a>` : esc(n || 'N.N.'); };
   const done = r => r.s1 != null && r.s2 != null;
-  const table = (rows, withRes) => {
+  // Spiele als übersichtliche Karten: je Turnier nach Session (Nachmittag/Abend bzw. Uhrzeit) gruppiert, Sieger hervorgehoben
+  const sessOf = r => {
+    if (r.starts_at) return { k: '0' + tOf(r.starts_at), l: tOf(r.starts_at) + ' Uhr' };
+    const n = r.note || '', h = (n.match(/ab (\d{1,2}(?::\d{2})?) ?Uhr/) || [])[1];
+    if (/Nachmittag/i.test(n)) return { k: '1', l: 'Nachmittag' + (h ? ` · ab ${h} Uhr` : '') };
+    if (/Abend/i.test(n)) return { k: '2', l: 'Abend' + (h ? ` · ab ${h} Uhr` : '') };
+    return { k: '9', l: 'Weitere Spiele' };
+  };
+  const stageOf = r => ((r.note || '').match(/(Main Stage|Stage Two|Stage \w+|Bühne \w+)/i) || [])[1] || '';
+  const keyOf = r => r.wm ? `m:${r.ext_key}` : `t:${r.id}`;
+  const card = r => {
+    const d = done(r), live = !d && r.ls1 != null, w1 = d && r.s1 > r.s2, w2 = d && r.s2 > r.s1;
+    const meta = [r.round, r.fmt, stageOf(r)].filter(Boolean).map(esc).join(' · ');
+    const sc = (v, lv) => d ? v : live ? lv : '';
+    return `<li class="mc ${d ? 'done' : live ? 'live' : 'open'}" data-k="${esc(keyOf(r))}"><div class="mc-top"><span class="mc-meta">${meta}</span><span class="mc-st">${d ? 'Beendet' : live ? 'Live' : 'Folgt'}</span></div>`
+      + `<div class="mc-p${w1 ? ' win' : w2 ? ' lose' : ''}"><span class="mc-n">${pl(r.player1)}</span><b class="mc-s mc-s1">${sc(r.s1, r.ls1) ?? ''}</b></div>`
+      + `<div class="mc-p${w2 ? ' win' : w1 ? ' lose' : ''}"><span class="mc-n">${pl(r.player2)}</span><b class="mc-s mc-s2">${sc(r.s2, r.ls2) ?? ''}</b></div></li>`;
+  };
+  const table = rows => {
     if (!rows.length) return '';
     const by = {}; rows.forEach(r => (by[r.event] = by[r.event] || []).push(r));
-    return Object.entries(by).map(([ev, rs]) => `<h3>${esc(ev)}</h3><table class="stack dh-t"><thead><tr><th>Zeit</th><th>Runde</th><th>Spiel</th><th>${withRes ? 'Ergebnis' : 'Stand'}</th></tr></thead><tbody>${rs.map(r => {
-      const w1 = done(r) && r.s1 > r.s2, w2 = done(r) && r.s2 > r.s1;
-      const res = done(r) ? `<b>${r.s1}:${r.s2}</b>` : (r.ls1 != null ? `live ${r.ls1}:${r.ls2}` : 'offen');
-      return `<tr><td>${r.starts_at ? tOf(r.starts_at) + ' Uhr' : (r.note && /Abend/.test(r.note) ? 'Abend' : r.note && /Nachmittag/.test(r.note) ? 'Nachmittag' : '–')}</td><td>${esc(r.round || '')}${r.fmt ? `<small> · ${esc(r.fmt)}</small>` : ''}</td><td>${w1 ? '<b>' : ''}${pl(r.player1)}${w1 ? '</b>' : ''} – ${w2 ? '<b>' : ''}${pl(r.player2)}${w2 ? '</b>' : ''}</td><td>${res}</td></tr>`; }).join('')}</tbody></table>`).join('');
+    return Object.entries(by).map(([ev, rs]) => {
+      const ss = {}; rs.forEach(r => { const x = sessOf(r); (ss[x.k] = ss[x.k] || { l: x.l, rs: [] }).rs.push(r); });
+      const nDone = rs.filter(done).length;
+      return `<div class="mday"><h3 class="mday-h">${esc(ev)} <small>${nDone} von ${rs.length} beendet</small></h3>${Object.keys(ss).sort().map(k => {
+        const g = ss[k], gs = [...g.rs].sort((a, b) => stageOf(a).localeCompare(stageOf(b)) || (done(b) - done(a)));
+        return `<section class="msess"><h4>${esc(g.l)} <small>${g.rs.filter(done).length}/${g.rs.length}</small></h4><ol class="mcards">${gs.map(card).join('')}</ol></section>`; }).join('')}</div>`;
+    }).join('');
   };
   const evInfo = d => { const ev = evOn(d); if (!ev.length) { const n = nextEv(d); return `<p>${d === D0 ? 'Heute' : 'An diesem Tag'} steht kein großes PDC-Turnier an.${n ? ` Weiter geht es mit <b>${esc(n.name)}</b> (${esc(n.location || '')}) ab ${dLbl(n.start)}.` : ''}</p>`; }
     return `<ul class="dh-ev">${ev.map(e => `<li><b>${esc(e.name)}</b>${e.location ? ` – ${esc(e.location)}` : ''} <span class="note">(${dShort(e.start)}${e.end && e.end !== e.start ? ' bis ' + dShort(e.end) : ''})</span></li>`).join('')}</ul>`; };
@@ -686,8 +721,20 @@ write('404.html', page({ title: 'Seite nicht gefunden | Darts aktuell', desc: 'D
     return `<ul class="dh-ev">${[...new Set([...ev.map(e => e.name), ...rows.map(r => r.event)])].filter(n => n !== 'WM-Auslosung' || true).map(n => `<li><b>${esc(n)}</b>: ${tv[n] ? esc(tv[n]) : /WM/.test(n) ? WMTV : 'Übertragung bei DAZN; ob und wann zusätzlich das Free-TV (SPORT1) zeigt, steht im aktuellen Programm des Senders'}</li>`).join('')}</ul>`; };
   const newsOn = d => data.news.filter(n => String(n.date).slice(0, 10) === d).slice(0, 8);
   const newsList = ns => ns.length ? `<ul class="dh-news">${ns.map(n => `<li><a href="/news/${n.slug}/">${esc(n.title)}</a></li>`).join('')}</ul>` : '';
-  const stand = `<p class="note dh-stand">Stand: ${new Date().toLocaleString('de-DE', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: TZ })} Uhr – die Seite wird alle 30 Minuten aktualisiert.</p>`;
-  const links = cur => `<div class="dh-links" role="navigation" aria-label="Darts heute">${[['/darts-heute/', 'Darts heute'], ['/darts-ergebnisse-heute/', 'Ergebnisse heute'], ['/darts-ergebnisse-gestern/', 'Ergebnisse gestern'], ['/darts-heute-im-tv/', 'Darts heute im TV'], ['/darts-spielplan-heute/', 'Spielplan heute'], ['/liveticker/', 'Live-Ticker'], ['/darts-fragen/', 'Darts-Fragen']].map(([u, l]) => u === cur ? `<span>${l}</span>` : `<a href="${u}">${l}</a>`).join('')}</div>`;
+  const stand = `<p class="note dh-stand" id="dhStand">Stand: ${new Date().toLocaleString('de-DE', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: TZ })} Uhr – neue Ergebnisse erscheinen automatisch.</p>`;
+  // Holt die Spielstände jede Minute frisch aus Supabase, damit die Seite nicht bis zum nächsten Bau (30 Min.) veraltet ist
+  const dhLive = `<script>(function(){var U=${JSON.stringify(URL_)},K=${JSON.stringify(KEY)},D=${JSON.stringify([D1, D0, DP])};
+function q(p){return fetch(U+'/rest/v1/'+p,{headers:{apikey:K,Authorization:'Bearer '+K}}).then(function(r){if(!r.ok)throw 0;return r.json()})}
+function set(k,a,b,la,lb){var li=document.querySelector('.mc[data-k="'+k+'"]');if(!li)return;var d=a!=null&&b!=null,lv=!d&&la!=null;
+li.className='mc '+(d?'done':lv?'live':'open');li.querySelector('.mc-st').textContent=d?'Beendet':lv?'Live':'Folgt';
+var p=li.querySelectorAll('.mc-p'),s1=d?a:lv?la:'',s2=d?b:lv?lb:'';li.querySelector('.mc-s1').textContent=s1==null?'':s1;li.querySelector('.mc-s2').textContent=s2==null?'':s2;
+p[0].className='mc-p'+(d&&a>b?' win':d&&b>a?' lose':'');p[1].className='mc-p'+(d&&b>a?' win':d&&a>b?' lose':'')}
+function tick(){if(document.hidden)return;Promise.all([q('tagesplan?select=id,s1,s2&day=in.('+D.join(',')+')'),q('matches?select=ext_key,sets1,sets2,live_s1,live_s2&starts_at=gte.'+D[0]+'T00:00:00%2B01:00&starts_at=lt.'+D[2]+'T23:59:59%2B01:00')]).then(function(r){
+r[0].forEach(function(x){set('t:'+x.id,x.s1,x.s2)});r[1].forEach(function(x){set('m:'+x.ext_key,x.sets1,x.sets2,x.live_s1,x.live_s2)});
+document.querySelectorAll('.msess').forEach(function(s){var a=s.querySelectorAll('.mc'),n=s.querySelectorAll('.mc.done').length,sm=s.querySelector('h4 small');if(sm)sm.textContent=n+'/'+a.length});
+document.querySelectorAll('.mday').forEach(function(s){var a=s.querySelectorAll('.mc'),n=s.querySelectorAll('.mc.done').length,sm=s.querySelector('.mday-h small');if(sm)sm.textContent=n+' von '+a.length+' beendet'});
+var st=document.getElementById('dhStand');if(st)st.textContent='Live aktualisiert: '+new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})+' Uhr';}).catch(function(){})}
+if(document.querySelector('.mc')){tick();setInterval(tick,60000);document.addEventListener('visibilitychange',tick)}})();</script>`;
   const evLD = rows => rows.slice(0, 40).map(r => ({ '@context': 'https://schema.org', '@type': 'SportsEvent', name: `${r.player1} vs ${r.player2} – ${r.event}${r.round ? ' (' + r.round + ')' : ''}`, startDate: r.starts_at || r.day, sport: 'Darts', eventStatus: 'https://schema.org/EventScheduled', location: { '@type': 'Place', name: r.wm ? 'Alexandra Palace, London' : (evOn(r.day || D0)[0] || {}).location || r.event }, competitor: [{ '@type': 'Person', name: r.player1 }, { '@type': 'Person', name: r.player2 }] }));
   const faq = qs => ({ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: qs.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) });
   const r0 = rowsFor(D0), r1 = rowsFor(D1), rp = rowsFor(DP);
@@ -696,35 +743,31 @@ write('404.html', page({ title: 'Seite nicht gefunden | Darts aktuell', desc: 'D
   const DH = [
     { url: '/darts-heute/', title: `Darts heute (${dShort(D0)}): Spiele, Ergebnisse, TV & Live-Ticker | Darts aktuell`, desc: `Darts heute, ${dLbl(D0)}: ${sum0}. Alle Spiele mit Uhrzeit, Ergebnisse, wer überträgt (TV & Stream) und der Live-Ticker.`, h1: 'Darts <span>heute</span>',
       lead: `${dLbl(D0)}: alle Darts-Spiele des Tages mit Uhrzeit und Ergebnis, die TV-Übertragung und der Live-Ticker – auf einen Blick.`,
-      body: `<h2>Was läuft heute?</h2>${evInfo(D0)}<h2>Spiele und Ergebnisse heute</h2>${table(r0, false) || '<p>Für heute sind keine Spiele eingetragen.</p>'}<p><a class="btn-r" href="/liveticker/">Zum Live-Ticker</a></p><h2>Darts heute im TV</h2>${tvInfo(D0)}${rp.length ? `<h2>Morgen, ${dLbl(DP)}</h2>${table(rp, false)}` : ''}${r1.length ? `<h2>Gestern</h2><p><a href="/darts-ergebnisse-gestern/">Alle Ergebnisse von gestern</a></p>` : ''}${newsOn(D0).length ? `<h2>Darts-News von heute</h2>${newsList(newsOn(D0))}` : ''}`,
+      body: `<h2>Was läuft heute?</h2>${evInfo(D0)}<h2>Spiele und Ergebnisse heute</h2>${table(r0) || '<p>Für heute sind keine Spiele eingetragen.</p>'}<p><a class="btn-r" href="/liveticker/">Zum Live-Ticker</a></p><h2>Darts heute im TV</h2>${tvInfo(D0)}${rp.length ? `<h2>Morgen, ${dLbl(DP)}</h2>${table(rp)}` : ''}${r1.length ? `<h2>Gestern</h2><p><a href="/darts-ergebnisse-gestern/">Alle Ergebnisse von gestern</a></p>` : ''}${newsOn(D0).length ? `<h2>Darts-News von heute</h2>${newsList(newsOn(D0))}` : ''}`,
       ld: [faq([['Wo läuft Darts heute im TV?', tvInfo(D0).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()], ['Welche Darts-Spiele sind heute?', sum0 + '.']]), ...evLD(r0)] },
     { url: '/darts-ergebnisse-heute/', title: `Darts Ergebnisse heute (${dShort(D0)}): alle Spiele & Resultate | Darts aktuell`, desc: `Darts-Ergebnisse von heute, ${dLbl(D0)}: ${r0.filter(done).length} von ${r0.length || 0} Spielen beendet. Alle Resultate, Sieger und laufende Spiele – aktualisiert alle 30 Minuten.`, h1: 'Darts Ergebnisse <span>heute</span>',
       lead: `Alle Darts-Ergebnisse von ${dLbl(D0)}. Sieger sind fett markiert, laufende Spiele siehst du im Live-Ticker.`,
-      body: `${table(r0, true) || `<p>Heute gibt es noch keine Ergebnisse.</p>${evInfo(D0)}`}<p><a class="btn-r" href="/liveticker/">Live-Ticker</a> <a class="btn-y" href="/darts-ergebnisse-gestern/">Ergebnisse von gestern</a></p>`,
+      body: `${table(r0) || `<p>Heute gibt es noch keine Ergebnisse.</p>${evInfo(D0)}`}<p><a class="btn-r" href="/liveticker/">Live-Ticker</a> <a class="btn-y" href="/darts-ergebnisse-gestern/">Ergebnisse von gestern</a></p>`,
       ld: [faq([['Wie sind die Darts-Ergebnisse heute?', r0.filter(done).length ? r0.filter(done).map(r => `${r.player1} ${r.s1}:${r.s2} ${r.player2}`).slice(0, 12).join(', ') + '.' : 'Heute sind noch keine Spiele beendet.']]), ...evLD(r0)] },
     { url: '/darts-ergebnisse-gestern/', title: `Darts Ergebnisse von gestern (${dShort(D1)}) & gestern Abend | Darts aktuell`, desc: `Darts gestern Abend: alle Ergebnisse von ${dLbl(D1)}${r1.length ? ` – ${r1.filter(done).length} Spiele` : ''}. Sieger, Resultate und was heute folgt.`, h1: 'Darts Ergebnisse <span>gestern</span>',
       lead: `Alle Ergebnisse von ${dLbl(D1)} – auch vom Abend. Sieger sind fett markiert.`,
-      body: `${table(r1, true) || `<p>Gestern wurden keine großen PDC-Spiele gespielt.</p>`}${newsOn(D1).length ? `<h2>Berichte von gestern</h2>${newsList(newsOn(D1))}` : ''}<p><a class="btn-r" href="/darts-heute/">Was läuft heute?</a></p>`,
+      body: `${table(r1) || `<p>Gestern wurden keine großen PDC-Spiele gespielt.</p>`}${newsOn(D1).length ? `<h2>Berichte von gestern</h2>${newsList(newsOn(D1))}` : ''}<p><a class="btn-r" href="/darts-heute/">Was läuft heute?</a></p>`,
       ld: [faq([['Wie hat Darts gestern Abend geendet?', r1.filter(done).length ? r1.filter(done).map(r => `${r.player1} ${r.s1}:${r.s2} ${r.player2}`).slice(0, 12).join(', ') + '.' : 'Gestern fanden keine großen PDC-Spiele statt.']])] },
     { url: '/darts-heute-im-tv/', title: `Darts heute live im TV & Stream (${dShort(D0)}): Wer überträgt? | Darts aktuell`, desc: `Darts-Live-Übertragung heute, ${dLbl(D0)}: welche Turniere laufen, wann die Sessions beginnen und wo du sie im Free-TV oder Stream siehst.`, h1: 'Darts heute <span>im TV</span>',
       lead: `Wo läuft Darts heute live? Turniere, Sessions und Sender für ${dLbl(D0)}.`,
-      body: `<h2>Übertragung heute</h2>${tvInfo(D0)}<h2>Was läuft heute?</h2>${evInfo(D0)}${table(r0, false)}<p class="note">Angaben zu Sendern ohne Gewähr – maßgeblich ist das aktuelle Programm von SPORT1 und DAZN.</p>`,
+      body: `<h2>Übertragung heute</h2>${tvInfo(D0)}<h2>Was läuft heute?</h2>${evInfo(D0)}${table(r0)}<p class="note">Angaben zu Sendern ohne Gewähr – maßgeblich ist das aktuelle Programm von SPORT1 und DAZN.</p>`,
       ld: [faq([['Wo kann man Darts heute live sehen?', tvInfo(D0).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()]])] },
     { url: '/darts-spielplan-heute/', title: `Darts Spielplan heute & morgen (${dShort(D0)}) | Darts aktuell`, desc: `Darts-Spielplan für heute, ${dLbl(D0)}, und morgen: alle Partien mit Uhrzeit, Runde und Turnier.`, h1: 'Darts Spielplan <span>heute</span>',
       lead: `Alle Partien von heute und morgen mit Uhrzeit (deutsche Zeit), Runde und Turnier.`,
-      body: `<h2>Heute, ${dLbl(D0)}</h2>${table(r0, false) || evInfo(D0)}<h2>Morgen, ${dLbl(DP)}</h2>${table(rp, false) || evInfo(DP)}<p><a class="btn-y" href="/darts-wm-spielplan/">Kompletter WM-Spielplan</a></p>`,
+      body: `<h2>Heute, ${dLbl(D0)}</h2>${table(r0) || evInfo(D0)}<h2>Morgen, ${dLbl(DP)}</h2>${table(rp) || evInfo(DP)}<p><a class="btn-y" href="/darts-wm-spielplan/">Kompletter WM-Spielplan</a></p>`,
       ld: [...evLD([...r0, ...rp])] },
   ];
   for (const P of DH) {
     write(P.url.slice(1) + 'index.html', pageFn({ title: P.title, desc: P.desc, url: P.url, ld: [crumbs([['Darts aktuell', '/'], [P.h1.replace(/<[^>]+>/g, ''), P.url]]), ...P.ld] },
-      intro(P.h1, P.lead, crumbNav([['Startseite', '/'], [P.h1.replace(/<[^>]+>/g, ''), P.url]]), [P.url, P.title.replace(' | Darts aktuell', '') + ' 🎯']) + `<section class="band"><div class="wrap dh">${links(P.url)}${stand}${P.body}${tippPromo}</div></section>`, []));
+      intro(P.h1, P.lead, crumbNav([['Startseite', '/'], [P.h1.replace(/<[^>]+>/g, ''), P.url]]), [P.url, P.title.replace(' | Darts aktuell', '') + ' 🎯']) + `<section class="band"><div class="wrap dh">${stand}${P.body}${tippPromo}</div></section>${dhLive}`, []));
     pages.push({ url: P.url, pri: '0.9', freq: 'hourly' });
   }
-  // Startseite: Schnellzugriff auf die Tagesseiten
-  const ip = path.join(OUT, 'index.html');
-  if (fs.existsSync(ip)) { const h = fs.readFileSync(ip, 'utf8'); const hook = '<section class="hero band" id="news"><div class="wrap">';
-    if (h.includes(hook)) fs.writeFileSync(ip, h.replace(hook, hook + links('')));
-  }
+
 }
 
 /* ---------- Darts-Fragen (häufige Google-Fragen) ---------- */

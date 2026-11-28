@@ -510,3 +510,65 @@ nav .links a.navlive::before{content:"";display:inline-block;width:8px;height:8p
 .saybtn{position:absolute;top:4px;right:4px;z-index:3;width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.45);color:#fff;display:grid;place-items:center;cursor:pointer;padding:0}
 .saybtn[aria-pressed="false"]{opacity:.6}
 @media (prefers-reduced-motion:reduce){.hitflash.on{animation:none;opacity:.55;transform:none}}
+
+/* Auswahlfelder (Tippspiel u. a.): eigener Pfeil, größer, klarer Fokus */
+.tcard select,.row select,.dark-select{-webkit-appearance:none;appearance:none;min-height:48px;padding:0 44px 0 14px;border-radius:12px;font-weight:600;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1.5 1.5 7 7l5.5-5.5' fill='none' stroke='%23e1262f' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 16px center;background-size:14px 9px;text-overflow:ellipsis;transition:border-color .15s,box-shadow .15s}
+.tcard select:hover,.row select:hover{border-color:color-mix(in srgb,var(--gold) 60%,var(--line))}
+.tcard select:focus,.tcard input:focus,.row select:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 35%,transparent)}
+.tcard select:disabled,.tcard input:disabled{opacity:.6;cursor:not-allowed}
+.tcard select option{background:var(--card);color:var(--ink)}
+.tq input,.tq select{min-height:48px;border-radius:12px;font-size:17px}
+
+/* Spieler-Vorschläge im Tippspiel */
+.ac{position:relative}
+.ac-list{position:absolute;z-index:30;left:0;right:0;top:calc(100% + 6px);margin:0;padding:6px;list-style:none;background:var(--card);border:1px solid var(--gold);border-radius:12px;box-shadow:0 14px 30px rgba(0,0,0,.35);max-height:min(320px,45vh);overflow-y:auto}
+.ac-list li{padding:12px 12px;border-radius:8px;cursor:pointer;font-size:17px;line-height:1.2;-webkit-tap-highlight-color:transparent}
+.ac-list li+li{border-top:1px solid var(--line)}
+.ac-list li b{color:var(--red);font-weight:800}
+.ac-list li:hover,.ac-list li[aria-selected=true]{background:color-mix(in srgb,var(--gold) 22%,transparent)}
+
+/* Tagesseiten: Spiele als Karten */
+.mday{margin:22px 0 8px}
+.mday-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
+.mday-h small{font:600 13px/1 Barlow,system-ui,sans-serif;text-transform:none;color:var(--soft)}
+.msess{margin:14px 0 0}
+.msess h4{margin:0 0 8px;display:flex;align-items:center;gap:10px;font:700 15px/1.2 Barlow,system-ui,sans-serif;text-transform:uppercase;letter-spacing:.04em;color:light-dark(#136b3a,#7fd3a0)}
+.msess h4::after{content:"";flex:1;height:1px;background:var(--line)}
+.msess h4 small{order:2;font-weight:600;letter-spacing:0;color:var(--soft)}
+.mcards{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:10px}
+.mc{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:12px;padding:10px 14px 8px}
+.mc.done{border-left-color:var(--green)}
+.mc.live{border-left-color:var(--red)}
+.mc-top{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:12px;color:var(--soft);margin-bottom:4px}
+.mc-meta{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mc-st{flex:none;font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:11px;padding:2px 8px;border-radius:999px;background:var(--bg);border:1px solid var(--line)}
+.mc.done .mc-st{color:light-dark(#136b3a,#7fd3a0)}
+.mc.live .mc-st{background:var(--red);border-color:var(--red);color:#fff;animation:ltpulse 1.6s infinite}
+.mc-p{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:5px 0;font-size:17px}
+.mc-p+.mc-p{border-top:1px dashed var(--line)}
+.mc-n{overflow-wrap:anywhere}
+.mc-n a{color:inherit;text-decoration:none}
+.mc-n a:hover{text-decoration:underline}
+.mc-s{flex:none;min-width:2ch;text-align:right;font:700 22px/1 Oswald,Impact,sans-serif;font-variant-numeric:tabular-nums}
+.mc-p.win{font-weight:700}
+.mc-p.win .mc-s{color:var(--red)}
+.mc-p.win .mc-n::after{content:" ✓";color:light-dark(#136b3a,#7fd3a0)}
+.mc-p.lose{color:var(--soft)}
+.mc.open .mc-s{display:none}
+
+/* „Darts heute“-Links: im Handy-Menü und ganz unten auf jeder Seite */
+.menu-dh{display:none}
+@media(max-width:1199px){
+  .menu-dh{display:flex;flex-wrap:wrap;gap:8px;padding:14px 0 6px;margin-top:6px;border-top:2px solid var(--edge)}
+  .menu-dh b{width:100%;font:700 13px/1 Barlow,system-ui,sans-serif;text-transform:uppercase;letter-spacing:.06em;color:var(--gold);padding:0 2px 4px}
+  nav .links .menu-dh a{padding:8px 14px;font-size:15px;border:1px solid var(--edge);border-radius:999px;font-weight:600}
+  nav .links .menu-dh a[aria-current]{background:var(--red);border-color:var(--red)}
+}
+.foot-dh{padding:0 0 18px;margin:0 0 18px;border-bottom:1px solid var(--edge)}
+.foot-dh-h{display:block;font:700 14px/1.2 Barlow,system-ui,sans-serif;text-transform:uppercase;letter-spacing:.06em;color:var(--gold);margin:0 0 10px}
+footer .dh-links{margin:0}
+footer .dh-links a{background:rgba(255,255,255,.06);border-color:var(--edge);color:var(--nink);font-weight:600}
+footer .dh-links a:hover{border-color:var(--gold)}
+footer .dh-links a[aria-current]{background:var(--red);border-color:var(--red);color:#fff}
