@@ -157,7 +157,7 @@ const cardHtml = (n, h = 'h3') => `<article class="ncard">${meta(n)}<${h}><a hre
 /* ---------- Ausgabe ---------- */
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.mkdirSync(OUT, { recursive: true });
-for (const f of ['admin.html', 'impressum.html', 'datenschutz.html', 'teilnahmebedingungen.html', 'config.js', 'tippspiel.js', 'news.js', 'app.js', 'live.js', 'style.css', 'CNAME', 'manifest.webmanifest'])
+for (const f of ['admin.html', 'impressum.html', 'datenschutz.html', 'teilnahmebedingungen.html', 'config.js', 'tippspiel.js', 'news.js', 'app.js', 'live.js', 'style.css', 'CNAME', 'manifest.webmanifest', 'favicon.ico', 'favicon.svg'])
   if (fs.existsSync(path.join(ROOT, f))) fs.copyFileSync(path.join(ROOT, f), path.join(OUT, f));
 fs.cpSync(path.join(ROOT, 'data'), path.join(OUT, 'data'), { recursive: true });
 if (fs.existsSync(path.join(ROOT, 'img'))) fs.cpSync(path.join(ROOT, 'img'), path.join(OUT, 'img'), { recursive: true });
