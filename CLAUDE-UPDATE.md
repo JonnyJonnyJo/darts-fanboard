@@ -62,6 +62,21 @@ Nie `drop`, `truncate` oder `delete` ohne `where`.
 - Eine bereits eingetragene Startzeit nie nach hinten verschieben (sonst könnte nach Anwurf noch getippt werden).
 - Nach dem WM-Finale die richtigen Antworten der Langzeit-Tipps **nicht** selbst eintragen – das macht Jonas in admin.html. Stattdessen im Bericht die Ergebnisse nennen (Weltmeister, Vize, Littlers Runde, beste deutsche Runde, Zahl der 9-Darter).
 
+## Auslosung der WM (Mo 30.11.2026, ab ca. 17:30 Uhr deutscher Zeit)
+
+Die Seite baut sich alle 30 Minuten automatisch neu. Sobald `matches` gefüllt ist, erscheinen ohne weiteres Zutun:
+Spielplan nach Tagen und Sessions (Nachmittag/Abend) mit TV-Hinweis „Sport1 (Free-TV) & DAZN“, eine Tabelle „Die Deutschen bei der WM“,
+der Block „Heute bei der WM“ bzw. „Nächste WM-Spiele“ auf der Startseite und Gegner/Termin auf jeder Spielerseite (`/spieler/<name>/`).
+
+Am Auslosungsabend und am Tag danach:
+1. **Auslosung (Paarungen):** pdc.tv-Meldung „World Championship draw“ prüfen (zweite Quelle: skysports.com oder sportinglife.com). Die 64 Erstrunden-Paarungen erst eintragen, wenn auch der **Spielplan nach Sessions** („schedule of play“) mit Tag und Session jeder Partie veröffentlicht ist – `starts_at` ist Pflicht und bestimmt die Tipp-Sperre.
+2. Ist der Spielplan noch nicht da: nur eine News mit den Paarungen der deutschen Spieler und den Top-Duellen schreiben (`is_top = true`), `matches` noch leer lassen und im nächsten Lauf erneut prüfen.
+3. **Eintragen:** `ext_key` `WM27-R1-001` … `WM27-R1-064` in der Reihenfolge des Spielplans (erster Spieltag zuerst, innerhalb der Session in Spielreihenfolge). `round = '1. Runde'`, `best_of = 5`, `sets1/sets2 = null`.
+   Session-Beginn deutscher Zeit (Nachmittag meist 13:30, Abend 20:00 – immer mit dem offiziellen Spielplan abgleichen), z. B. `'2026-12-11 20:00+01'`.
+4. Spielernamen genau wie bei der PDC schreiben (z. B. „Ricardo Pietreczko“, „Gabriel Clemens“, „Martin Schindler“), damit die Spielerseiten passen. Deutsche Spieler werden automatisch markiert.
+5. Danach prüfen: `select count(*) from matches where round = '1. Runde';` muss 64 ergeben; keine Doppelungen von Spielern.
+6. News: je eine Meldung zur Auslosung (Top) und eine zu den deutschen Spielern mit Gegner und Termin (eigene Worte).
+
 ## Ton
 
 Fan-nah, aber faktentreu und fair zu allen Spielern. Deutsch, kurze Sätze, Fachbegriffe wie im deutschen Darts-TV (Leg, Set, Average, Checkout).
